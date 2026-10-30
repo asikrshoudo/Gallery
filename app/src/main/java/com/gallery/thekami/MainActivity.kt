@@ -9,17 +9,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.gallery.thekami.core.data.settings.SettingsRepository
 import com.gallery.thekami.core.domain.settings.AppSettings
 import com.gallery.thekami.core.domain.settings.ThemeMode
 import com.gallery.thekami.core.ui.theme.GalleryTheme
 import com.gallery.thekami.ui.GalleryApp
 
 class MainActivity : ComponentActivity() {
-    private val settingsRepository by lazy { SettingsRepository(applicationContext) }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val settingsRepository = (application as GalleryApplication).settingsRepository
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = AppSettings())
             val dark = settings.themeMode == ThemeMode.Dark

@@ -30,18 +30,20 @@ import com.gallery.thekami.core.domain.settings.NavBarStyle
 import com.gallery.thekami.core.ui.navigation.GalleryBottomBar
 import com.gallery.thekami.ui.collections.CollectionsScreen
 import com.gallery.thekami.ui.home.HomeScreen
+import com.gallery.thekami.ui.home.HomeViewModel
 import com.gallery.thekami.ui.search.SearchScreen
 
 @Composable
 fun GalleryApp(navBarStyle: NavBarStyle) {
     val context = LocalContext.current
-    val media: MediaViewModel = viewModel(factory = MediaViewModel.Factory)
-    val mediaState by media.state.collectAsStateWithLifecycle()
-    val isRefreshing by media.isRefreshing.collectAsStateWithLifecycle()
+    val home: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+    val uiState by home.uiState.collectAsStateWithLifecycle()
+    val homeSettings by home.homeSettings.collectAsStateWithLifecycle()
+    val isRefreshing by home.isRefreshing.collectAsStateWithLifecycle()
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-    ) { media.onPermissionResult() }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { media.onResume() }
+    ) { home.onPermissionResult() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { home.onResume() }
 
     var nav by rememberSaveable(stateSaver = NavigationStateSaver) { mutableStateOf(NavigationState()) }
     val backTarget = nav.back()
@@ -66,13 +68,15 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                 when (destination) {
                     TopLevelDestination.Home -> HomeScreen(
                         contentPadding = padding,
-                        state = mediaState,
+                        uiState = uiState,
+                        settings = homeSettings,
                         isRefreshing = isRefreshing,
                         onRequestAccess = {
-                            permissionLauncher.launch(media.permissionsToRequest().toTypedArray())
+                            permissionLauncher.launch(home.permissionsToRequest().toTypedArray())
                         },
                         onOpenSettings = { openAppSettings(context) },
-                        onRefresh = media::refresh,
+                        onRefresh = home::refresh,
+                        onSettingsChange = home::setHomeSettings,
                     )
                     TopLevelDestination.Collections -> CollectionsScreen(padding)
                 }

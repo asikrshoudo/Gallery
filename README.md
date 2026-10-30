@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 3 (local media data layer). Home shows library status only; the timeline comes next.
+> Status: Phase 4 (Home timeline). Viewer, albums and search come in later phases.
 
 ## Architecture
 
@@ -63,3 +63,17 @@ GPL-3.0, see `LICENSE`.
 Known limits: GPS is only read where MediaStore still exposes it (Android 9 and below);
 reading EXIF location on Android 10+ needs another permission and is left to the Places phase.
 The full list is held in memory as metadata only (no pixels), without paging.
+
+## Home timeline
+
+- Default view is Camera Roll (media under DCIM, excluding screenshot folders). All Media adds
+  screenshots and other apps' media according to the toggles. Photos and Videos toggles apply to
+  both views. Grouping by Day, Month or Year. Settings persist with DataStore.
+- Classification uses the folder MediaStore reports, not file names. It is a convention-based
+  heuristic: a camera app that saves outside DCIM counts as "other apps", and screen recordings
+  are not treated as screenshots.
+- Hiding something from Home never removes it from the library, Albums, Folders or search.
+- Thumbnails: Coil 3 with bounded memory cache (20% of the app's memory class), decoded at cell
+  size, requests cancelled when cells scroll away. Video thumbnails use `coil-video`.
+- Hidden/private and Trash exclusion is wired through `selectHomeMedia(excludedKeys = ...)`
+  and will be fed when those systems exist.

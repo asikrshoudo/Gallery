@@ -3,12 +3,14 @@
     <string name="app_name">Gallery</string>
     <string name="action_back">Back</string>
 
+    <string name="home_refresh">Refresh</string>
+    <string name="home_customize">Customize Home</string>
+    <string name="home_customize_done">Done</string>
+
     <string name="home_empty_title">No photos or videos found</string>
     <string name="home_empty_message">Photos and videos on this device will show up here.</string>
-    <string name="home_found_title">%1$s · %2$s</string>
-    <string name="home_ready_message">Your library is connected. The photo timeline is coming in the next update.</string>
-    <string name="home_refresh">Refresh</string>
-    <string name="home_refreshing">Refreshing</string>
+    <string name="home_filtered_title">Nothing to show on Home</string>
+    <string name="home_filtered_message">Your Home settings hide everything. Hidden media is still in your library.</string>
 
     <string name="home_permission_title">Allow access to your photos</string>
     <string name="home_permission_message">Gallery needs permission to show the photos and videos stored on this device. They stay on your device.</string>
@@ -21,14 +23,23 @@
     <string name="home_error_title">Couldn\'t read your library</string>
     <string name="home_error_message">Something went wrong while reading photos and videos.</string>
 
-    <plurals name="home_photo_count">
-        <item quantity="one">%1$d photo</item>
-        <item quantity="other">%1$d photos</item>
-    </plurals>
-    <plurals name="home_video_count">
-        <item quantity="one">%1$d video</item>
-        <item quantity="other">%1$d videos</item>
-    </plurals>
+    <string name="home_view_section">Home view</string>
+    <string name="home_view_camera_roll">Camera Roll</string>
+    <string name="home_view_all_media">All Media</string>
+    <string name="home_group_section">Group by</string>
+    <string name="group_day">Day</string>
+    <string name="group_month">Month</string>
+    <string name="group_year">Year</string>
+    <string name="home_include_section">Include</string>
+    <string name="include_photos">Photos</string>
+    <string name="include_videos">Videos</string>
+    <string name="include_screenshots">Screenshots</string>
+    <string name="include_other_apps">Media from other apps</string>
+    <string name="home_include_note">Screenshots and other apps\' media are used in All Media. Anything you hide here stays in your library, Albums, Folders and search.</string>
+
+    <string name="timeline_today">Today</string>
+    <string name="timeline_yesterday">Yesterday</string>
+    <string name="timeline_no_date">No date</string>
 
     <string name="collections_title">Collections</string>
     <string name="collections_empty_title">No collections yet</string>
