@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.media.MediaAccess
+import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.domain.settings.HomeSettings
 import com.gallery.thekami.core.ui.states.EmptyState
 import com.gallery.thekami.core.ui.states.ErrorState
@@ -45,6 +46,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onRefresh: () -> Unit,
     onSettingsChange: (HomeSettings) -> Unit,
+    onOpenMedia: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showCustomize by rememberSaveable { mutableStateOf(false) }
@@ -68,6 +70,7 @@ fun HomeScreen(
                     bottomPadding = bottom,
                     onRequestAccess = onRequestAccess,
                     onCustomize = { showCustomize = true },
+                    onOpenMedia = onOpenMedia,
                 )
             }
         }
@@ -118,6 +121,7 @@ private fun ReadyContent(
     bottomPadding: androidx.compose.ui.unit.Dp,
     onRequestAccess: () -> Unit,
     onCustomize: () -> Unit,
+    onOpenMedia: (MediaItem) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         if (state.access == MediaAccess.Partial) PartialAccessBanner(onRequestAccess)
@@ -139,6 +143,7 @@ private fun ReadyContent(
             else -> MediaTimelineGrid(
                 entries = state.timeline,
                 contentPadding = PaddingValues(bottom = bottomPadding),
+                onOpenMedia = onOpenMedia,
                 modifier = Modifier.weight(1f),
             )
         }

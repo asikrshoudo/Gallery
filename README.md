@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 4 (Home timeline). Viewer, albums and search come in later phases.
+> Status: Phase 5 (full-screen viewer). Albums, search and editing come in later phases.
 
 ## Architecture
 
@@ -77,3 +77,25 @@ The full list is held in memory as metadata only (no pixels), without paging.
   size, requests cancelled when cells scroll away. Video thumbnails use `coil-video`.
 - Hidden/private and Trash exclusion is wired through `selectHomeMedia(excludedKeys = ...)`
   and will be fed when those systems exist.
+
+## Viewer
+
+- Opens from a Home grid item and navigates exactly the sequence Home was showing (a snapshot;
+  albums, folders and search will pass their own sequences). Swipe between items; a thumbnail
+  filmstrip stays in sync with the pager and tapping a thumbnail jumps to that item.
+- Photos: pinch zoom, pan, double-tap. Decoded to at most 2560 px on the long side, never full
+  resolution. Animated GIF plays in the viewer (grid thumbnails stay still).
+- Video: Media3 ExoPlayer with play/pause, seek, progress and duration. Playback depends on the
+  device's decoders: 4K plays only where the device, codec and container support it, otherwise a
+  clear "can't play" message is shown. The player pauses when the app stops; position survives
+  rotation.
+- HEIC/HEIF: decoded by the Android platform (Android 9+). On older versions such photos show an
+  error message instead of a picture.
+- Live Photos: an iPhone Live Photo exported to Android is a still plus a short .MOV. The viewer
+  only shows a LIVE control when it finds a same-folder, same-base-name, short QuickTime video
+  next to a still. Motion Photos embedded in a JPEG (Google/Samsung) are not supported yet.
+- Delete: Android 11+ moves the item to the system Trash after Android's own confirmation.
+  Below Android 11 the viewer explains that deleting is unavailable. Restoring from inside
+  Gallery arrives with the Trash phase.
+- Share sends the original file through the system chooser; nothing is uploaded by the app.
+- The viewer is not restored after the app process is killed; it opens closed.

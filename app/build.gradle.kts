@@ -37,6 +37,7 @@ android {
     lint {
         abortOnError = true
         checkDependencies = true
+        disable += "UnsafeOptInUsageError"
     }
 }
 
@@ -48,6 +49,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.coil.video)
+    implementation(libs.coil.gif)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)

@@ -10,6 +10,7 @@ import com.gallery.thekami.core.data.settings.SettingsRepository
 import com.gallery.thekami.core.domain.media.MediaAccess
 import com.gallery.thekami.core.domain.media.MediaLibraryState
 import com.gallery.thekami.core.domain.media.MediaRepository
+import com.gallery.thekami.core.domain.media.buildLivePhotoPairs
 import com.gallery.thekami.core.domain.media.buildTimeline
 import com.gallery.thekami.core.domain.media.selectHomeMedia
 import com.gallery.thekami.core.domain.settings.HomeSettings
@@ -58,6 +59,8 @@ class HomeViewModel(
 
     fun onPermissionResult() = media.refresh()
 
+    fun onMediaChanged() = media.refresh()
+
     fun onResume() {
         // With partial access the user's selection can change without a MediaStore event.
         if (media.currentAccess() == MediaAccess.Partial) media.refresh() else media.checkForChanges()
@@ -88,6 +91,8 @@ private fun toUiState(library: MediaLibraryState, home: HomeSettings): HomeUiSta
         val shown = selectHomeMedia(library.items, home)
         HomeUiState.Ready(
             timeline = buildTimeline(shown, home.grouping),
+            sequence = shown,
+            livePairs = buildLivePhotoPairs(library.items),
             shownCount = shown.size,
             libraryCount = library.items.size,
             access = library.access,

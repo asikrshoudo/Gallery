@@ -1,5 +1,6 @@
 package com.gallery.thekami.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,6 +21,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.gallery.thekami.R
+import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.domain.media.TimelineEntry
 import com.gallery.thekami.core.ui.media.MediaThumbnail
 import com.gallery.thekami.core.ui.theme.GalleryTheme
@@ -30,6 +32,7 @@ import java.time.LocalDate
 fun MediaTimelineGrid(
     entries: List<TimelineEntry>,
     contentPadding: PaddingValues,
+    onOpenMedia: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -49,7 +52,10 @@ fun MediaTimelineGrid(
         ) { entry ->
             when (entry) {
                 is TimelineEntry.Header -> DateHeader(entry)
-                is TimelineEntry.Media -> MediaThumbnail(entry.item, Modifier.aspectRatio(1f))
+                is TimelineEntry.Media -> MediaThumbnail(
+                    item = entry.item,
+                    modifier = Modifier.aspectRatio(1f).clickable { onOpenMedia(entry.item) },
+                )
             }
         }
     }
