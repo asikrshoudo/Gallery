@@ -2,11 +2,38 @@
 <resources>
     <string name="app_name">Gallery</string>
     <string name="action_back">Back</string>
-    <string name="home_empty_title">Nothing here yet</string>
-    <string name="home_empty_message">Photos and videos from your device will show up here.</string>
+
+    <string name="home_empty_title">No photos or videos found</string>
+    <string name="home_empty_message">Photos and videos on this device will show up here.</string>
+    <string name="home_found_title">%1$s · %2$s</string>
+    <string name="home_ready_message">Your library is connected. The photo timeline is coming in the next update.</string>
+    <string name="home_refresh">Refresh</string>
+    <string name="home_refreshing">Refreshing</string>
+
+    <string name="home_permission_title">Allow access to your photos</string>
+    <string name="home_permission_message">Gallery needs permission to show the photos and videos stored on this device. They stay on your device.</string>
+    <string name="home_permission_allow">Allow access</string>
+    <string name="home_permission_settings">Open app settings</string>
+
+    <string name="home_limited_message">Gallery can see only some of your photos and videos.</string>
+    <string name="home_limited_action">Allow more access</string>
+
+    <string name="home_error_title">Couldn\'t read your library</string>
+    <string name="home_error_message">Something went wrong while reading photos and videos.</string>
+
+    <plurals name="home_photo_count">
+        <item quantity="one">%1$d photo</item>
+        <item quantity="other">%1$d photos</item>
+    </plurals>
+    <plurals name="home_video_count">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+
     <string name="collections_title">Collections</string>
     <string name="collections_empty_title">No collections yet</string>
     <string name="collections_empty_message">Albums and folders will show up here.</string>
+
     <string name="search_title">Search</string>
     <string name="search_unavailable_title">Search isn\'t ready yet</string>
     <string name="search_unavailable_message">Searching your library arrives in a later update.</string>

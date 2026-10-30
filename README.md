@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 2 (theme, app shell and navigation). No gallery features yet.
+> Status: Phase 3 (local media data layer). Home shows library status only; the timeline comes next.
 
 ## Architecture
 
@@ -45,3 +45,21 @@ GPL-3.0, see `LICENSE`.
   See `third_party/ubuntu-mono/`.
 - Preferences (`ThemeMode`, `FontChoice`, `NavBarStyle`) live in `core:domain` and are
   persisted by `SettingsRepository` (`core:data`, Jetpack DataStore).
+
+## Media data layer
+
+- Source: Android MediaStore (images and videos from every volume MediaStore reports, so
+  DCIM, Pictures, Download, Movies and other apps' media are found without a folder list).
+- Read-only: the app only queries metadata. It never modifies, moves, uploads or deletes media,
+  and indexing never decodes pixels.
+- Permissions: Android 12 and below `READ_EXTERNAL_STORAGE`; 13 `READ_MEDIA_IMAGES` and
+  `READ_MEDIA_VIDEO`; 14+ also `READ_MEDIA_VISUAL_USER_SELECTED` (partial access). Denied,
+  partial and revoked states are handled; nothing else is requested.
+- Refresh: a debounced MediaStore observer, an explicit Refresh, and a cheap check on resume.
+  On Android 11+ the MediaStore generation counter skips reloads when nothing changed.
+- Logic with unit tests (`core:domain`): sorting, filtering, duplicate prevention, date grouping,
+  permission policy.
+
+Known limits: GPS is only read where MediaStore still exposes it (Android 9 and below);
+reading EXIF location on Android 10+ needs another permission and is left to the Places phase.
+The full list is held in memory as metadata only (no pixels), without paging.
