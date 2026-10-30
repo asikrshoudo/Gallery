@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Gallery</string>
+    <string name="action_back">Back</string>
+    <string name="home_empty_title">Nothing here yet</string>
+    <string name="home_empty_message">Photos and videos from your device will show up here.</string>
+    <string name="collections_title">Collections</string>
+    <string name="collections_empty_title">No collections yet</string>
+    <string name="collections_empty_message">Albums and folders will show up here.</string>
+    <string name="search_title">Search</string>
+    <string name="search_unavailable_title">Search isn\'t ready yet</string>
+    <string name="search_unavailable_message">Searching your library arrives in a later update.</string>
 </resources>

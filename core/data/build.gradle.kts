@@ -14,5 +14,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:domain"))
+    api(project(":core:domain"))
+    api(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.datastore.preferences)
 }

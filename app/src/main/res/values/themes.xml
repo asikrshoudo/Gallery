@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background matches the default dark theme to avoid a white flash at launch. -->
+    <style name="Theme.Gallery" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#100A09</item>
+    </style>
+</resources>
