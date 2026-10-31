@@ -19,21 +19,19 @@ class GalleryApplication : Application(), SingletonImageLoader.Factory {
     val mediaRepository: MediaRepository by lazy { MediaStoreMediaRepository(this) }
 
     /**
-     * Grid and filmstrip thumbnails: stills only (a GIF shows its first frame, so a screen full
-     * of GIFs does not animate) plus video frames. Decoders are added explicitly, not via
-     * service loading, so behaviour does not depend on auto-registration.
+     * Grid and filmstrip thumbnails. The video decoder is added explicitly. The GIF decoder is
+     * not added here, but Coil may still register it by itself, so check on a device whether
+     * GIF thumbnails in the grid stay still.
      */
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
-            .serviceLoaderEnabled(false)
             .components { add(VideoFrameDecoder.Factory()) }
             .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.2).build() }
             .build()
 
-    /** Viewer only: also decodes animated GIF (and animated WebP on Android 9+). */
+    /** Viewer only: explicitly adds animated GIF (and animated WebP on Android 9+) decoding. */
     val viewerImageLoader: ImageLoader by lazy {
         ImageLoader.Builder(this)
-            .serviceLoaderEnabled(false)
             .components {
                 if (Build.VERSION.SDK_INT >= 28) add(AnimatedImageDecoder.Factory()) else add(GifDecoder.Factory())
                 add(VideoFrameDecoder.Factory())
