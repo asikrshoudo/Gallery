@@ -161,4 +161,27 @@
     <string name="add_to_album_new">New album</string>
     <string name="add_to_album_none">You don\'t have any albums yet.</string>
     <string name="add_to_album_done">Done</string>
+
+    <string name="favourites_title">Favourites</string>
+    <string name="favourites_empty_title">No favourites yet</string>
+    <string name="favourites_empty_message">Tap the heart in the viewer to add a photo or video here.</string>
+    <string name="pinned_title">Pinned</string>
+    <string name="pinned_empty_title">Nothing pinned yet</string>
+    <string name="pinned_empty_message">Open a photo or video, then choose Pin from the menu. Pinning only marks it inside Gallery; it doesn\'t move or change the file.</string>
+    <string name="viewer_favourite_add">Add to favourites</string>
+    <string name="viewer_favourite_remove">Remove from favourites</string>
+    <string name="viewer_pin">Pin</string>
+    <string name="viewer_unpin">Unpin</string>
+    <string name="info_added">Added</string>
+
+    <string name="search_hint">Search by name, date or folder</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_idle_title">Search your library</string>
+    <string name="search_idle_message">Type a file name, a folder, or a date such as 2024, March, or 2024-03-15. Search works on this device only.</string>
+    <string name="search_no_results_title">No matches</string>
+    <string name="search_no_results_message">Nothing matched \"%1$s\". Search covers file names, folders and dates.</string>
+    <plurals name="search_result_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
 </resources>

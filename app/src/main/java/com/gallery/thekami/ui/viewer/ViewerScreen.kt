@@ -67,6 +67,7 @@ import com.gallery.thekami.GalleryApplication
 import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.album.Album
 import com.gallery.thekami.core.domain.media.MediaItem
+import com.gallery.thekami.core.domain.media.MediaMarks
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
@@ -83,6 +84,9 @@ fun ViewerScreen(
     session: ViewerSession,
     viewModel: ViewerViewModel,
     albums: List<Album>,
+    marks: MediaMarks,
+    onToggleFavourite: (String) -> Unit,
+    onTogglePinned: (String) -> Unit,
     onToggleAlbum: (albumId: String, key: String, add: Boolean) -> Unit,
     onCreateAlbum: (name: String, key: String) -> Unit,
     onMediaChanged: () -> Unit,
@@ -172,6 +176,10 @@ fun ViewerScreen(
         ) {
             ViewerTopBar(
                 onClose = viewModel::close,
+                isFavourite = current != null && marks.isFavourite(current.key),
+                isPinned = current != null && marks.isPinned(current.key),
+                onToggleFavourite = { current?.let { onToggleFavourite(it.key) } },
+                onTogglePinned = { current?.let { onTogglePinned(it.key) } },
                 onShare = { current?.let { shareMedia(context, it, context.getString(R.string.viewer_share_title)) } },
                 onAddToAlbum = { dialog = ViewerDialog.AddToAlbum },
                 onInfo = { dialog = ViewerDialog.Info },

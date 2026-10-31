@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 6 (Collections, albums, folders). Search, favourites, People and the rest come in later phases.
+> Status: Phase 7 (search, favourites, pinned, details). People, Trash and editing come in later phases.
 
 ## Architecture
 
@@ -117,3 +117,21 @@ The full list is held in memory as metadata only (no pixels), without paging.
   is shown as one folder.
 - Add to album: from the viewer ("Add to album") or from an album ("Add photos", multi-select).
   Long-press in an album to select items; remove them or set a cover.
+
+## Search, favourites and pinned
+
+- Search runs fully on the device against MediaStore metadata: file name, folder and date. Words
+  are combined with AND. Dates understood: `2024`, month names (English and the device language),
+  `2024-03`, `2024-03-15`, `15 march`, `today`, `yesterday`. A result opens the viewer with the
+  result list as its sequence. The query is kept while the viewer is open, on rotation and when
+  Search is closed and reopened (not across process death).
+- Search does not search people or picture content. The code has a `MediaSearchProvider`
+  interface so such providers can be added later; only the metadata provider exists.
+- Favourites and pins are Gallery-only marks stored in app storage (DataStore), by media URI.
+  They never modify, move or change the permissions of the file. If Android assigns a file a
+  new URI (for example after a full media re-index or restoring a phone), the old mark shows as
+  "can't be found". Reach them from Collections > Albums > Favourites / Pinned. Badges show on
+  thumbnails in every grid.
+- Details (viewer menu) lists only metadata MediaStore reported. GPS is shown only when
+  MediaStore provides it (Android 9 and below); newer Android versions hide it without extra
+  permission, and Gallery does not request that permission yet.

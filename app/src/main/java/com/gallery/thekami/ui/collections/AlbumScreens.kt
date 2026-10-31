@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,6 +41,7 @@ import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.album.AlbumView
 import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.domain.navigation.CollectionsRoute
+import com.gallery.thekami.core.ui.icons.PinIcon
 import com.gallery.thekami.core.ui.media.MediaThumbnail
 import com.gallery.thekami.core.ui.states.EmptyState
 import com.gallery.thekami.core.ui.theme.GalleryTheme
@@ -58,19 +61,37 @@ fun AlbumsScreen(state: CollectionsState.Ready, bottomPadding: Dp, actions: Coll
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.albums_new))
             }
         }
-        if (state.albums.isEmpty()) {
-            Column(Modifier.weight(1f).padding(bottom = bottomPadding)) {
-                EmptyState(
-                    title = stringResource(R.string.albums_empty_title),
-                    message = stringResource(R.string.albums_empty_message),
-                    modifier = Modifier.weight(1f),
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = bottomPadding)) {
+            item(key = "builtin-favourites") {
+                BuiltInRow(
+                    icon = Icons.Filled.Favorite,
+                    title = stringResource(R.string.favourites_title),
+                    count = state.favourites.size,
+                    onClick = { actions.push(CollectionsRoute.Favourites) },
                 )
-                Box(Modifier.fillMaxWidth().padding(horizontal = spacing.lg, vertical = spacing.md)) {
-                    PrimaryButton(stringResource(R.string.albums_new), { creating = true })
-                }
             }
-        } else {
-            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = bottomPadding)) {
+            item(key = "builtin-pinned") {
+                BuiltInRow(
+                    icon = PinIcon,
+                    title = stringResource(R.string.pinned_title),
+                    count = state.pinned.size,
+                    onClick = { actions.push(CollectionsRoute.Pinned) },
+                )
+            }
+            if (state.albums.isEmpty()) {
+                item(key = "albums-empty") {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = spacing.lg, vertical = spacing.xl)) {
+                        Text(stringResource(R.string.albums_empty_title), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            stringResource(R.string.albums_empty_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = spacing.xs, bottom = spacing.md),
+                        )
+                        PrimaryButton(stringResource(R.string.albums_new), { creating = true })
+                    }
+                }
+            } else {
                 items(state.albums, key = { it.id }) { view ->
                     AlbumRow(
                         view = view,
@@ -116,6 +137,34 @@ fun AlbumsScreen(state: CollectionsState.Ready, bottomPadding: Dp, actions: Coll
             },
             onDismiss = { deleting = null },
         )
+    }
+}
+
+/** Built-in collections (not albums): same layout as an album row, no menu. */
+@Composable
+private fun BuiltInRow(icon: ImageVector, title: String, count: Int, onClick: () -> Unit) {
+    val spacing = GalleryTheme.spacing
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = spacing.lg, top = spacing.sm, bottom = spacing.sm, end = spacing.lg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+        }
+        Column(Modifier.weight(1f).padding(horizontal = spacing.md)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                quantityString(R.plurals.item_count, count),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

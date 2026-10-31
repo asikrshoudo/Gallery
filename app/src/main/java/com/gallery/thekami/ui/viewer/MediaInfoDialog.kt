@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.media.MediaItem
+import com.gallery.thekami.core.domain.media.describeMediaType
 import com.gallery.thekami.core.domain.media.formatDuration
 import java.time.Instant
 import java.time.ZoneId
@@ -24,7 +25,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-/** Shows only metadata MediaStore actually reported. Missing fields are left out, not invented. */
+/**
+ * Shows only metadata MediaStore actually reported; missing fields are left out, never
+ * invented. Location appears only when MediaStore provides coordinates (Android 9 and below).
+ */
 @Composable
 fun MediaInfoDialog(item: MediaItem, onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -34,13 +38,14 @@ fun MediaInfoDialog(item: MediaItem, onDismiss: () -> Unit) {
 
     val rows = buildList {
         add(stringResource(R.string.info_name) to item.displayName)
-        add(stringResource(R.string.info_type) to item.mimeType)
+        add(stringResource(R.string.info_type) to "${describeMediaType(item.mimeType)} (${item.mimeType})")
         val width = item.width
         val height = item.height
         if (width != null && height != null) add(stringResource(R.string.info_dimensions) to "$width × $height")
         item.sizeBytes?.let { add(stringResource(R.string.info_size) to Formatter.formatFileSize(context, it)) }
         item.dateTakenMillis?.let { add(stringResource(R.string.info_taken) to date(it)) }
         item.dateModifiedMillis?.let { add(stringResource(R.string.info_modified) to date(it)) }
+        item.dateAddedMillis?.let { add(stringResource(R.string.info_added) to date(it)) }
         val duration = item.durationMillis
         if (item.isVideo && duration != null) add(stringResource(R.string.info_duration) to formatDuration(duration))
         (item.relativePath?.takeIf { it.isNotEmpty() } ?: item.bucketName)?.let {

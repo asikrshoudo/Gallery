@@ -2,6 +2,7 @@ package com.gallery.thekami.ui.viewer
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,10 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,13 +56,18 @@ import com.gallery.thekami.core.ui.theme.GalleryColors
 
 @Composable
 fun ViewerTopBar(
+    isFavourite: Boolean,
+    isPinned: Boolean,
     onClose: () -> Unit,
-    onAddToAlbum: () -> Unit,
+    onToggleFavourite: () -> Unit,
     onShare: () -> Unit,
-    onInfo: () -> Unit,
     onDelete: () -> Unit,
+    onAddToAlbum: () -> Unit,
+    onTogglePinned: () -> Unit,
+    onInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     Row(
         modifier
             .fillMaxWidth()
@@ -67,10 +78,34 @@ fun ViewerTopBar(
     ) {
         BarIcon(Icons.Filled.Close, R.string.viewer_close, onClose)
         Spacer(Modifier.weight(1f))
-        BarIcon(Icons.Filled.Add, R.string.viewer_add_to_album, onAddToAlbum)
+        IconButton(onClick = onToggleFavourite) {
+            Icon(
+                imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = stringResource(
+                    if (isFavourite) R.string.viewer_favourite_remove else R.string.viewer_favourite_add,
+                ),
+                tint = if (isFavourite) GalleryColors.Lime else Color.White,
+            )
+        }
         BarIcon(Icons.Filled.Share, R.string.viewer_share, onShare)
-        BarIcon(Icons.Filled.Info, R.string.viewer_info, onInfo)
         BarIcon(Icons.Filled.Delete, R.string.viewer_delete, onDelete)
+        Box {
+            BarIcon(Icons.Filled.MoreVert, R.string.menu_more) { menuOpen = true }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.viewer_add_to_album)) },
+                    onClick = { menuOpen = false; onAddToAlbum() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (isPinned) R.string.viewer_unpin else R.string.viewer_pin)) },
+                    onClick = { menuOpen = false; onTogglePinned() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.viewer_info)) },
+                    onClick = { menuOpen = false; onInfo() },
+                )
+            }
+        }
     }
 }
 

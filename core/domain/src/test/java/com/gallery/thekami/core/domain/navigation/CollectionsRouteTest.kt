@@ -11,6 +11,8 @@ class CollectionsRouteTest {
             CollectionsRoute.Albums,
             CollectionsRoute.Folders,
             CollectionsRoute.OtherFolders,
+            CollectionsRoute.Favourites,
+            CollectionsRoute.Pinned,
             CollectionsRoute.AlbumDetail("3f2a-uuid"),
             CollectionsRoute.AlbumPicker("3f2a-uuid"),
             CollectionsRoute.FolderDetail("dcim/camera/"),

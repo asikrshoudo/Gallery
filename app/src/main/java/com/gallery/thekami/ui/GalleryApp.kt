@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gallery.thekami.core.domain.navigation.NavigationState
 import com.gallery.thekami.core.domain.navigation.TopLevelDestination
 import com.gallery.thekami.core.domain.settings.NavBarStyle
+import com.gallery.thekami.core.ui.media.LocalMediaMarks
 import com.gallery.thekami.core.ui.navigation.GalleryBottomBar
 import com.gallery.thekami.ui.collections.CollectionsActions
 import com.gallery.thekami.ui.collections.CollectionsHost
@@ -40,6 +42,7 @@ import com.gallery.thekami.ui.home.HomeScreen
 import com.gallery.thekami.ui.home.HomeUiState
 import com.gallery.thekami.ui.home.HomeViewModel
 import com.gallery.thekami.ui.search.SearchScreen
+import com.gallery.thekami.ui.search.SearchViewModel
 import com.gallery.thekami.ui.viewer.ViewerScreen
 import com.gallery.thekami.ui.viewer.ViewerSession
 import com.gallery.thekami.ui.viewer.ViewerViewModel
@@ -51,6 +54,9 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     val home: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
     val collections: CollectionsViewModel = viewModel(factory = CollectionsViewModel.Factory)
     val viewer: ViewerViewModel = viewModel()
+    val marksModel: MarksViewModel = viewModel(factory = MarksViewModel.Factory)
+    val search: SearchViewModel = viewModel(factory = SearchViewModel.Factory)
+    val marks by marksModel.marks.collectAsStateWithLifecycle()
     val uiState by home.uiState.collectAsStateWithLifecycle()
     val homeSettings by home.homeSettings.collectAsStateWithLifecycle()
     val isRefreshing by home.isRefreshing.collectAsStateWithLifecycle()
@@ -101,6 +107,7 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
         setCover = { id, key -> collections.setCover(id, key) },
     )
 
+    CompositionLocalProvider(LocalMediaMarks provides marks) {
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             // Hide the shell from accessibility services while an overlay covers it.
@@ -145,7 +152,16 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
             enter = fadeIn(tween(150)),
             exit = fadeOut(tween(150)),
         ) {
-            SearchScreen(onClose = { nav = nav.closeSearch() })
+            SearchScreen(
+                viewModel = search,
+                onClose = { nav = nav.closeSearch() },
+                onOpenMedia = { sequence, item, pairs -> viewer.open(sequence, item.key, pairs) },
+                onRequestAccess = { requestAccess() },
+                onOpenSettings = { openAppSettings(context) },
+                onRefresh = home::refresh,
+                // The viewer opens on top of Search; hide Search from accessibility while it does.
+                modifier = if (viewerSession != null) Modifier.clearAndSetSemantics {} else Modifier,
+            )
         }
         AnimatedVisibility(
             visible = viewerSession != null,
@@ -157,11 +173,15 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                     session = it,
                     viewModel = viewer,
                     albums = albums,
+                    marks = marks,
+                    onToggleFavourite = marksModel::toggleFavourite,
+                    onTogglePinned = marksModel::togglePinned,
                     onToggleAlbum = { albumId, key, add -> collections.toggleMedia(albumId, key, add) },
                     onCreateAlbum = { name, key -> collections.createAlbum(name, key) },
                     onMediaChanged = home::onMediaChanged,
                 )
             }
         }
+    }
     }
 }

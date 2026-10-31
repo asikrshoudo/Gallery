@@ -16,6 +16,14 @@ sealed interface CollectionsRoute {
         override fun encode() = "other-folders"
     }
 
+    data object Favourites : CollectionsRoute {
+        override fun encode() = "favourites"
+    }
+
+    data object Pinned : CollectionsRoute {
+        override fun encode() = "pinned"
+    }
+
     data class AlbumDetail(val albumId: String) : CollectionsRoute {
         override fun encode() = "album:$albumId"
     }
@@ -36,6 +44,8 @@ sealed interface CollectionsRoute {
                 "albums" -> Albums
                 "folders" -> Folders
                 "other-folders" -> OtherFolders
+                "favourites" -> Favourites
+                "pinned" -> Pinned
                 "album" -> AlbumDetail(id)
                 "picker" -> AlbumPicker(id)
                 "folder" -> FolderDetail(id)

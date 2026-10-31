@@ -10,8 +10,10 @@ import com.gallery.thekami.core.data.album.AlbumsRepository
 import com.gallery.thekami.core.domain.album.Album
 import com.gallery.thekami.core.domain.album.resolveAlbum
 import com.gallery.thekami.core.domain.media.MediaLibraryState
+import com.gallery.thekami.core.domain.media.MediaMarks
 import com.gallery.thekami.core.domain.media.buildLivePhotoPairs
 import com.gallery.thekami.core.domain.media.groupFolders
+import com.gallery.thekami.core.domain.media.selectMarked
 import com.gallery.thekami.core.domain.media.splitFolders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -22,15 +24,16 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Resolves albums and folders against the shared library. Album edits only touch app data. */
+/** Resolves albums, folders, favourites and pins against the shared library. */
 class CollectionsViewModel(
     library: Flow<MediaLibraryState>,
     private val albumsRepository: AlbumsRepository,
+    marks: Flow<MediaMarks>,
 ) : ViewModel() {
     val albums: StateFlow<List<Album>> =
         albumsRepository.albums.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val state: StateFlow<CollectionsState> = combine(library, albumsRepository.albums, ::toState)
+    val state: StateFlow<CollectionsState> = combine(library, albumsRepository.albums, marks, ::toState)
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CollectionsState.Loading)
 
@@ -70,24 +73,31 @@ class CollectionsViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as GalleryApplication
-                CollectionsViewModel(app.mediaLibrary.state, app.albumsRepository)
+                CollectionsViewModel(app.mediaLibrary.state, app.albumsRepository, app.marksRepository.marks)
             }
         }
     }
 }
 
-private fun toState(library: MediaLibraryState, albums: List<Album>): CollectionsState = when (library) {
-    MediaLibraryState.Loading -> CollectionsState.Loading
-    is MediaLibraryState.PermissionRequired -> CollectionsState.PermissionRequired
-    is MediaLibraryState.Failed -> CollectionsState.Failed(library.message)
-    is MediaLibraryState.Ready -> {
-        val byKey = library.items.associateBy { it.key }
-        CollectionsState.Ready(
-            items = library.items,
-            albums = albums.map { resolveAlbum(it, byKey) },
-            folders = splitFolders(groupFolders(library.items)),
-            livePairs = buildLivePhotoPairs(library.items),
-            access = library.access,
-        )
+private fun toState(library: MediaLibraryState, albums: List<Album>, marks: MediaMarks): CollectionsState =
+    when (library) {
+        MediaLibraryState.Loading -> CollectionsState.Loading
+        is MediaLibraryState.PermissionRequired -> CollectionsState.PermissionRequired
+        is MediaLibraryState.Failed -> CollectionsState.Failed(library.message)
+        is MediaLibraryState.Ready -> {
+            val byKey = library.items.associateBy { it.key }
+            val favourites = selectMarked(library.items, marks.favourites)
+            val pinned = selectMarked(library.items, marks.pinned)
+            CollectionsState.Ready(
+                items = library.items,
+                albums = albums.map { resolveAlbum(it, byKey) },
+                folders = splitFolders(groupFolders(library.items)),
+                livePairs = buildLivePhotoPairs(library.items),
+                access = library.access,
+                favourites = favourites,
+                favouriteMissing = marks.favourites.size - favourites.size,
+                pinned = pinned,
+                pinnedMissing = marks.pinned.size - pinned.size,
+            )
+        }
     }
-}

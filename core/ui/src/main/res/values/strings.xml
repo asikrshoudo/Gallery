@@ -8,4 +8,8 @@
     <string name="media_photo">Photo</string>
     <string name="media_video">Video</string>
     <string name="media_video_duration">Video, %1$s</string>
+    <string name="media_favourite">favourite</string>
+    <string name="media_pinned">pinned</string>
+    <string name="media_mark_both">favourite, pinned</string>
+    <string name="media_with_mark">%1$s, %2$s</string>
 </resources>

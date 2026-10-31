@@ -79,6 +79,8 @@ private fun RouteContent(
         is CollectionsRoute.AlbumPicker -> AlbumPickerScreen(state, route.albumId, bottom, actions)
         CollectionsRoute.Folders -> FoldersScreen(state, bottom, actions)
         CollectionsRoute.OtherFolders -> OtherFoldersScreen(state, bottom, actions)
+        CollectionsRoute.Favourites -> FavouritesScreen(state, bottom, actions)
+        CollectionsRoute.Pinned -> PinnedScreen(state, bottom, actions)
         is CollectionsRoute.FolderDetail -> FolderDetailScreen(state, route.folderId, bottom, actions)
     }
 }
