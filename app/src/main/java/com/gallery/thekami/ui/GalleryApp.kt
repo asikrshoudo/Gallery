@@ -32,7 +32,10 @@ import com.gallery.thekami.core.domain.navigation.NavigationState
 import com.gallery.thekami.core.domain.navigation.TopLevelDestination
 import com.gallery.thekami.core.domain.settings.NavBarStyle
 import com.gallery.thekami.core.ui.navigation.GalleryBottomBar
-import com.gallery.thekami.ui.collections.CollectionsScreen
+import com.gallery.thekami.ui.collections.CollectionsActions
+import com.gallery.thekami.ui.collections.CollectionsHost
+import com.gallery.thekami.ui.collections.CollectionsState
+import com.gallery.thekami.ui.collections.CollectionsViewModel
 import com.gallery.thekami.ui.home.HomeScreen
 import com.gallery.thekami.ui.home.HomeUiState
 import com.gallery.thekami.ui.home.HomeViewModel
@@ -46,10 +49,13 @@ import kotlinx.coroutines.delay
 fun GalleryApp(navBarStyle: NavBarStyle) {
     val context = LocalContext.current
     val home: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+    val collections: CollectionsViewModel = viewModel(factory = CollectionsViewModel.Factory)
     val viewer: ViewerViewModel = viewModel()
     val uiState by home.uiState.collectAsStateWithLifecycle()
     val homeSettings by home.homeSettings.collectAsStateWithLifecycle()
     val isRefreshing by home.isRefreshing.collectAsStateWithLifecycle()
+    val collectionsState by collections.state.collectAsStateWithLifecycle()
+    val albums by collections.albums.collectAsStateWithLifecycle()
     val viewerSession by viewer.session.collectAsStateWithLifecycle()
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -74,6 +80,26 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     BackHandler(enabled = viewerSession != null) { viewer.close() }
 
     val overlayOpen = nav.searchOpen || viewerSession != null
+    val requestAccess = { permissionLauncher.launch(home.permissionsToRequest().toTypedArray()) }
+
+    val collectionsActions = CollectionsActions(
+        push = { route -> nav = nav.push(route) },
+        pop = { nav = nav.pop() },
+        openSearch = { nav = nav.openSearch() },
+        openMedia = { sequence, item ->
+            val pairs = (collectionsState as? CollectionsState.Ready)?.livePairs ?: emptyMap()
+            viewer.open(sequence, item.key, pairs)
+        },
+        requestAccess = { requestAccess() },
+        openSettings = { openAppSettings(context) },
+        refresh = home::refresh,
+        createAlbum = { name -> collections.createAlbum(name) },
+        renameAlbum = { id, name -> collections.renameAlbum(id, name) },
+        deleteAlbum = { id -> collections.deleteAlbum(id) },
+        addMedia = { id, keys -> collections.addMedia(id, keys) },
+        removeMedia = { id, keys -> collections.removeMedia(id, keys) },
+        setCover = { id, key -> collections.setCover(id, key) },
+    )
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
@@ -97,9 +123,7 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                         uiState = uiState,
                         settings = homeSettings,
                         isRefreshing = isRefreshing,
-                        onRequestAccess = {
-                            permissionLauncher.launch(home.permissionsToRequest().toTypedArray())
-                        },
+                        onRequestAccess = { requestAccess() },
                         onOpenSettings = { openAppSettings(context) },
                         onRefresh = home::refresh,
                         onSettingsChange = home::setHomeSettings,
@@ -107,7 +131,12 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                             (uiState as? HomeUiState.Ready)?.let { viewer.open(it.sequence, item.key, it.livePairs) }
                         },
                     )
-                    TopLevelDestination.Collections -> CollectionsScreen(padding)
+                    TopLevelDestination.Collections -> CollectionsHost(
+                        route = nav.collectionsRoute,
+                        state = collectionsState,
+                        contentPadding = padding,
+                        actions = collectionsActions,
+                    )
                 }
             }
         }
@@ -124,7 +153,14 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
             exit = fadeOut(tween(150)) + scaleOut(tween(150), targetScale = 0.96f),
         ) {
             (viewerSession ?: lastViewerSession)?.let {
-                ViewerScreen(session = it, viewModel = viewer, onMediaChanged = home::onMediaChanged)
+                ViewerScreen(
+                    session = it,
+                    viewModel = viewer,
+                    albums = albums,
+                    onToggleAlbum = { albumId, key, add -> collections.toggleMedia(albumId, key, add) },
+                    onCreateAlbum = { name, key -> collections.createAlbum(name, key) },
+                    onMediaChanged = home::onMediaChanged,
+                )
             }
         }
     }

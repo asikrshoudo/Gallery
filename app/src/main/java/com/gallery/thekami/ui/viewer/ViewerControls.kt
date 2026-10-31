@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -50,6 +51,7 @@ import com.gallery.thekami.core.ui.theme.GalleryColors
 @Composable
 fun ViewerTopBar(
     onClose: () -> Unit,
+    onAddToAlbum: () -> Unit,
     onShare: () -> Unit,
     onInfo: () -> Unit,
     onDelete: () -> Unit,
@@ -65,6 +67,7 @@ fun ViewerTopBar(
     ) {
         BarIcon(Icons.Filled.Close, R.string.viewer_close, onClose)
         Spacer(Modifier.weight(1f))
+        BarIcon(Icons.Filled.Add, R.string.viewer_add_to_album, onAddToAlbum)
         BarIcon(Icons.Filled.Share, R.string.viewer_share, onShare)
         BarIcon(Icons.Filled.Info, R.string.viewer_info, onInfo)
         BarIcon(Icons.Filled.Delete, R.string.viewer_delete, onDelete)

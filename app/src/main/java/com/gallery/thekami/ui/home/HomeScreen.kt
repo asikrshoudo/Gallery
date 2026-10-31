@@ -33,6 +33,7 @@ import com.gallery.thekami.core.ui.states.EmptyState
 import com.gallery.thekami.core.ui.states.ErrorState
 import com.gallery.thekami.core.ui.states.LoadingState
 import com.gallery.thekami.core.ui.theme.GalleryTheme
+import com.gallery.thekami.ui.PermissionPrompt
 import com.gallery.thekami.ui.PrimaryButton
 import com.gallery.thekami.ui.SecondaryButton
 
@@ -183,25 +184,6 @@ private fun EmptyWithAction(
             Box(Modifier.fillMaxWidth().padding(horizontal = spacing.lg, vertical = spacing.md)) {
                 PrimaryButton(actionLabel, onAction)
             }
-        }
-    }
-}
-
-@Composable
-private fun PermissionPrompt(onRequestAccess: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier) {
-    val spacing = GalleryTheme.spacing
-    Column(modifier) {
-        EmptyState(
-            title = stringResource(R.string.home_permission_title),
-            message = stringResource(R.string.home_permission_message),
-            modifier = Modifier.weight(1f),
-        )
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = spacing.lg, vertical = spacing.md),
-            verticalArrangement = Arrangement.spacedBy(spacing.sm),
-        ) {
-            PrimaryButton(stringResource(R.string.home_permission_allow), onRequestAccess)
-            SecondaryButton(stringResource(R.string.home_permission_settings), onOpenSettings)
         }
     }
 }

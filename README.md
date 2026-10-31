@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 5 (full-screen viewer). Albums, search and editing come in later phases.
+> Status: Phase 6 (Collections, albums, folders). Search, favourites, People and the rest come in later phases.
 
 ## Architecture
 
@@ -99,3 +99,21 @@ The full list is held in memory as metadata only (no pixels), without paging.
   Gallery arrives with the Trash phase.
 - Share sends the original file through the system chooser; nothing is uploaded by the app.
 - The viewer is not restored after the app process is killed; it opens closed.
+
+## Collections
+
+- Order: Search, People, Albums, Folders, Moments, Places. People, Moments and Places are shown as
+  "Not available yet" and are not clickable until their phases. The bottom Search action is
+  hidden while Collections is active because Collections has its own Search entry.
+- Albums are Gallery's own logical collections stored with Jetpack DataStore. An album stores only
+  media keys (MediaStore content URIs). Creating, renaming, deleting an album or removing items
+  never moves, copies or deletes a file. An item can be in many albums and appears once per album.
+  If MediaStore later reports a different URI for a file (for example after restoring a phone or
+  a full media re-index), that album entry shows as "can't be found" instead of silently vanishing.
+- Folders are the folders MediaStore reports. Camera and screenshot folders are listed first;
+  every other folder is reachable once through "Other folders". Gallery cannot browse arbitrary
+  storage locations under Android scoped storage; folders without indexed media, or hidden from
+  media apps with a .nomedia file, do not appear. The same relative path on two storage volumes
+  is shown as one folder.
+- Add to album: from the viewer ("Add to album") or from an album ("Add photos", multi-select).
+  Long-press in an album to select items; remove them or set a cover.

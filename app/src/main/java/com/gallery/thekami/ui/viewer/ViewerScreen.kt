@@ -65,11 +65,12 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.gallery.thekami.GalleryApplication
 import com.gallery.thekami.R
+import com.gallery.thekami.core.domain.album.Album
 import com.gallery.thekami.core.domain.media.MediaItem
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
-private enum class ViewerDialog { Info, ConfirmDelete, DeleteUnsupported, DeleteFailed }
+private enum class ViewerDialog { Info, AddToAlbum, ConfirmDelete, DeleteUnsupported, DeleteFailed }
 
 /**
  * Full-screen viewer over [session].items (the sequence it was opened from). The pager, the
@@ -81,6 +82,9 @@ private enum class ViewerDialog { Info, ConfirmDelete, DeleteUnsupported, Delete
 fun ViewerScreen(
     session: ViewerSession,
     viewModel: ViewerViewModel,
+    albums: List<Album>,
+    onToggleAlbum: (albumId: String, key: String, add: Boolean) -> Unit,
+    onCreateAlbum: (name: String, key: String) -> Unit,
     onMediaChanged: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -169,6 +173,7 @@ fun ViewerScreen(
             ViewerTopBar(
                 onClose = viewModel::close,
                 onShare = { current?.let { shareMedia(context, it, context.getString(R.string.viewer_share_title)) } },
+                onAddToAlbum = { dialog = ViewerDialog.AddToAlbum },
                 onInfo = { dialog = ViewerDialog.Info },
                 onDelete = { dialog = if (canTrashFromViewer) ViewerDialog.ConfirmDelete else ViewerDialog.DeleteUnsupported },
             )
@@ -215,6 +220,15 @@ fun ViewerScreen(
 
     when (dialog) {
         ViewerDialog.Info -> current?.let { MediaInfoDialog(it) { dialog = null } }
+        ViewerDialog.AddToAlbum -> current?.let {
+            AddToAlbumDialog(
+                item = it,
+                albums = albums,
+                onToggle = onToggleAlbum,
+                onCreate = onCreateAlbum,
+                onDismiss = { dialog = null },
+            )
+        }
         ViewerDialog.ConfirmDelete -> AlertDialog(
             onDismissRequest = { dialog = null },
             title = { Text(stringResource(R.string.viewer_delete_title)) },

@@ -15,6 +15,7 @@ import com.gallery.thekami.core.domain.media.buildTimeline
 import com.gallery.thekami.core.domain.media.selectHomeMedia
 import com.gallery.thekami.core.domain.settings.HomeSettings
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
  */
 class HomeViewModel(
     private val media: MediaRepository,
+    private val libraryState: Flow<MediaLibraryState>,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     private val _isRefreshing = MutableStateFlow(false)
@@ -45,7 +47,7 @@ class HomeViewModel(
         homeSettingsFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeSettings())
 
     val uiState: StateFlow<HomeUiState> = combine(
-        media.libraryState().onEach { _isRefreshing.value = false },
+        libraryState.onEach { _isRefreshing.value = false },
         homeSettingsFlow,
         ::toUiState,
     )
@@ -76,7 +78,7 @@ class HomeViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as GalleryApplication
-                HomeViewModel(app.mediaRepository, app.settingsRepository)
+                HomeViewModel(app.mediaRepository, app.mediaLibrary.state, app.settingsRepository)
             }
         }
     }
