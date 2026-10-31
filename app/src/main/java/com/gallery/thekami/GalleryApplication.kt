@@ -10,8 +10,10 @@ import coil3.gif.GifDecoder
 import coil3.memory.MemoryCache
 import coil3.video.VideoFrameDecoder
 import com.gallery.thekami.core.data.album.AlbumsRepository
+import com.gallery.thekami.core.data.faces.FaceScanService
 import com.gallery.thekami.core.data.marks.MarksRepository
 import com.gallery.thekami.core.data.media.MediaStoreMediaRepository
+import com.gallery.thekami.core.data.people.PeopleRepository
 import com.gallery.thekami.core.data.settings.SettingsRepository
 import com.gallery.thekami.core.domain.media.MediaRepository
 import com.gallery.thekami.core.domain.media.SharedMediaLibrary
@@ -26,10 +28,21 @@ class GalleryApplication : Application(), SingletonImageLoader.Factory {
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
     val albumsRepository: AlbumsRepository by lazy { AlbumsRepository(this) }
     val marksRepository: MarksRepository by lazy { MarksRepository(this) }
+    val peopleRepository: PeopleRepository by lazy { PeopleRepository(this) }
     val mediaRepository: MediaRepository by lazy { MediaStoreMediaRepository(this) }
 
-    /** One shared library subscription for Home and Collections. */
+    /** One shared library subscription for Home, Collections and Search. */
     val mediaLibrary: SharedMediaLibrary by lazy { SharedMediaLibrary(mediaRepository, appScope) }
+
+    /** Optional face detection. Does nothing unless the user switches it on in Settings. */
+    val faceScan: FaceScanService by lazy {
+        FaceScanService(this, mediaLibrary.state, settingsRepository.settings, appScope)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        faceScan.start()
+    }
 
     /**
      * Grid and filmstrip thumbnails. The video decoder is added explicitly. The GIF decoder is

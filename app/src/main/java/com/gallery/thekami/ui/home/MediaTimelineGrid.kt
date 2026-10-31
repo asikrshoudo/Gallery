@@ -24,6 +24,7 @@ import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.domain.media.TimelineEntry
 import com.gallery.thekami.core.ui.media.MediaThumbnail
+import com.gallery.thekami.core.ui.motion.bouncyClickable
 import com.gallery.thekami.core.ui.theme.GalleryTheme
 import java.time.LocalDate
 
@@ -54,7 +55,7 @@ fun MediaTimelineGrid(
                 is TimelineEntry.Header -> DateHeader(entry)
                 is TimelineEntry.Media -> MediaThumbnail(
                     item = entry.item,
-                    modifier = Modifier.aspectRatio(1f).clickable { onOpenMedia(entry.item) },
+                    modifier = Modifier.aspectRatio(1f).bouncyClickable(onClick = { onOpenMedia(entry.item) }),
                 )
             }
         }

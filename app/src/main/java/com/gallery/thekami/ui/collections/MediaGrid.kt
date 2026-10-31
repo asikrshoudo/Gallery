@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.ui.media.MediaThumbnail
+import com.gallery.thekami.core.ui.motion.bouncyClickable
 import com.gallery.thekami.core.ui.theme.GalleryColors
 
 /** Flat media grid. [selected] items get a lime border and a check mark. */
@@ -51,7 +52,7 @@ fun MediaGrid(
                 Modifier
                     .aspectRatio(1f)
                     .semantics { this.selected = isSelected }
-                    .combinedClickable(
+                    .bouncyClickable(
                         onClick = { onClick(item) },
                         onLongClick = onLongClick?.let { handler -> { handler(item) } },
                     ),

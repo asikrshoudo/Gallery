@@ -16,7 +16,9 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,7 +38,6 @@ import com.gallery.thekami.core.domain.navigation.CollectionsRoute
 import com.gallery.thekami.core.ui.icons.CollectionsIcon
 import com.gallery.thekami.core.ui.icons.FolderIcon
 import com.gallery.thekami.core.ui.theme.GalleryTheme
-import com.gallery.thekami.ui.ScreenTitle
 import com.gallery.thekami.ui.quantityString
 
 /** Order: Search, People, Albums, Folders, Moments, Places. */
@@ -48,9 +49,30 @@ fun CollectionsRootScreen(state: CollectionsState.Ready, bottomPadding: Dp, acti
         contentPadding = PaddingValues(bottom = bottomPadding),
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
     ) {
-        item { ScreenTitle(stringResource(R.string.collections_title)) }
+        item {
+            Row(
+                Modifier.fillMaxWidth().padding(start = spacing.lg, end = spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.collections_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f).padding(vertical = spacing.md),
+                )
+                IconButton(onClick = actions.openGallerySettings) {
+                    Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_open))
+                }
+            }
+        }
         item { SearchEntry(actions.openSearch, Modifier.padding(horizontal = spacing.lg, vertical = spacing.sm)) }
-        item { CollectionRow(Icons.Filled.Person, stringResource(R.string.collections_people), unavailable, null) }
+        item {
+            CollectionRow(
+                icon = Icons.Filled.Person,
+                title = stringResource(R.string.collections_people),
+                subtitle = quantityString(R.plurals.person_count, state.people.size),
+                onClick = { actions.push(CollectionsRoute.People) },
+            )
+        }
         item {
             CollectionRow(
                 icon = CollectionsIcon,

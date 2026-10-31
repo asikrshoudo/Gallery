@@ -24,6 +24,10 @@ sealed interface CollectionsRoute {
         override fun encode() = "pinned"
     }
 
+    data object People : CollectionsRoute {
+        override fun encode() = "people"
+    }
+
     data class AlbumDetail(val albumId: String) : CollectionsRoute {
         override fun encode() = "album:$albumId"
     }
@@ -36,6 +40,14 @@ sealed interface CollectionsRoute {
         override fun encode() = "folder:$folderId"
     }
 
+    data class PersonDetail(val personId: String) : CollectionsRoute {
+        override fun encode() = "person:$personId"
+    }
+
+    data class PersonPicker(val personId: String) : CollectionsRoute {
+        override fun encode() = "person-picker:$personId"
+    }
+
     companion object {
         fun decode(value: String): CollectionsRoute? {
             val kind = value.substringBefore(':')
@@ -46,9 +58,12 @@ sealed interface CollectionsRoute {
                 "other-folders" -> OtherFolders
                 "favourites" -> Favourites
                 "pinned" -> Pinned
+                "people" -> People
                 "album" -> AlbumDetail(id)
                 "picker" -> AlbumPicker(id)
                 "folder" -> FolderDetail(id)
+                "person" -> PersonDetail(id)
+                "person-picker" -> PersonPicker(id)
                 else -> null
             }
         }

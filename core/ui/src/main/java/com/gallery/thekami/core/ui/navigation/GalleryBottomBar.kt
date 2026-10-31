@@ -2,6 +2,9 @@ package com.gallery.thekami.core.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -29,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -132,6 +136,11 @@ private fun NavItem(destination: TopLevelDestination, selected: Boolean, onClick
         label = "navIndicator",
     )
     val tint = if (selected) GalleryColors.OnLime else MaterialTheme.colorScheme.onSurfaceVariant
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.12f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "navIconScale",
+    )
     Box(
         modifier = Modifier
             .size(GalleryDimens.NavItemWidth, GalleryDimens.NavItemHeight)
@@ -144,7 +153,10 @@ private fun NavItem(destination: TopLevelDestination, selected: Boolean, onClick
             imageVector = destination.icon(),
             contentDescription = stringResource(destination.labelRes()),
             tint = tint,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(24.dp).graphicsLayer {
+                scaleX = iconScale
+                scaleY = iconScale
+            },
         )
     }
 }

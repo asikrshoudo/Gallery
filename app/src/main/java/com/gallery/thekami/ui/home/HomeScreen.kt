@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -18,43 +18,35 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.media.MediaAccess
 import com.gallery.thekami.core.domain.media.MediaItem
-import com.gallery.thekami.core.domain.settings.HomeSettings
 import com.gallery.thekami.core.ui.states.EmptyState
 import com.gallery.thekami.core.ui.states.ErrorState
 import com.gallery.thekami.core.ui.states.LoadingState
 import com.gallery.thekami.core.ui.theme.GalleryTheme
 import com.gallery.thekami.ui.PermissionPrompt
 import com.gallery.thekami.ui.PrimaryButton
-import com.gallery.thekami.ui.SecondaryButton
 
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
     uiState: HomeUiState,
-    settings: HomeSettings,
     isRefreshing: Boolean,
     onRequestAccess: () -> Unit,
     onOpenSettings: () -> Unit,
     onRefresh: () -> Unit,
-    onSettingsChange: (HomeSettings) -> Unit,
+    onOpenGallerySettings: () -> Unit,
     onOpenMedia: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showCustomize by rememberSaveable { mutableStateOf(false) }
     val bottom = contentPadding.calculateBottomPadding()
-
     Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-        HomeTopBar(isRefreshing, onRefresh, onCustomize = { showCustomize = true })
+        HomeTopBar(isRefreshing, onRefresh, onOpenGallerySettings)
         Box(Modifier.weight(1f)) {
             when (uiState) {
                 HomeUiState.Loading -> LoadingState(Modifier.padding(bottom = bottom))
@@ -70,24 +62,16 @@ fun HomeScreen(
                     state = uiState,
                     bottomPadding = bottom,
                     onRequestAccess = onRequestAccess,
-                    onCustomize = { showCustomize = true },
+                    onOpenGallerySettings = onOpenGallerySettings,
                     onOpenMedia = onOpenMedia,
                 )
             }
         }
     }
-
-    if (showCustomize) {
-        HomeCustomizeDialog(
-            settings = settings,
-            onSettingsChange = onSettingsChange,
-            onDismiss = { showCustomize = false },
-        )
-    }
 }
 
 @Composable
-private fun HomeTopBar(isRefreshing: Boolean, onRefresh: () -> Unit, onCustomize: () -> Unit) {
+private fun HomeTopBar(isRefreshing: Boolean, onRefresh: () -> Unit, onOpenGallerySettings: () -> Unit) {
     val spacing = GalleryTheme.spacing
     Column {
         Row(
@@ -102,8 +86,8 @@ private fun HomeTopBar(isRefreshing: Boolean, onRefresh: () -> Unit, onCustomize
             IconButton(onClick = onRefresh, enabled = !isRefreshing) {
                 Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.home_refresh))
             }
-            IconButton(onClick = onCustomize) {
-                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.home_customize))
+            IconButton(onClick = onOpenGallerySettings) {
+                Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_open))
             }
         }
         if (isRefreshing) {
@@ -119,9 +103,9 @@ private fun HomeTopBar(isRefreshing: Boolean, onRefresh: () -> Unit, onCustomize
 @Composable
 private fun ReadyContent(
     state: HomeUiState.Ready,
-    bottomPadding: androidx.compose.ui.unit.Dp,
+    bottomPadding: Dp,
     onRequestAccess: () -> Unit,
-    onCustomize: () -> Unit,
+    onOpenGallerySettings: () -> Unit,
     onOpenMedia: (MediaItem) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
@@ -137,8 +121,8 @@ private fun ReadyContent(
             state.shownCount == 0 -> EmptyWithAction(
                 title = stringResource(R.string.home_filtered_title),
                 message = stringResource(R.string.home_filtered_message),
-                actionLabel = stringResource(R.string.home_customize),
-                onAction = onCustomize,
+                actionLabel = stringResource(R.string.home_filtered_action),
+                onAction = onOpenGallerySettings,
                 modifier = Modifier.weight(1f).padding(bottom = bottomPadding),
             )
             else -> MediaTimelineGrid(

@@ -14,6 +14,7 @@ import com.gallery.thekami.core.domain.settings.FontChoice
 import com.gallery.thekami.core.domain.settings.HomeSettings
 import com.gallery.thekami.core.domain.settings.HomeViewMode
 import com.gallery.thekami.core.domain.settings.NavBarStyle
+import com.gallery.thekami.core.domain.settings.PeopleSettings
 import com.gallery.thekami.core.domain.settings.ThemeMode
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +45,10 @@ class SettingsRepository(context: Context) {
         store.edit { it[Keys.NAV_BAR_STYLE] = value.name }
     }
 
+    suspend fun setDetectFaces(value: Boolean) {
+        store.edit { it[Keys.DETECT_FACES] = value }
+    }
+
     suspend fun setHomeSettings(value: HomeSettings) {
         store.edit {
             it[Keys.HOME_VIEW_MODE] = value.viewMode.name
@@ -66,6 +71,7 @@ private object Keys {
     val HOME_VIDEOS = booleanPreferencesKey("home_include_videos")
     val HOME_SCREENSHOTS = booleanPreferencesKey("home_include_screenshots")
     val HOME_OTHER_APPS = booleanPreferencesKey("home_include_other_apps")
+    val DETECT_FACES = booleanPreferencesKey("people_detect_faces")
 }
 
 private fun Preferences.toAppSettings(): AppSettings {
@@ -83,6 +89,7 @@ private fun Preferences.toAppSettings(): AppSettings {
             includeOtherApps = this[Keys.HOME_OTHER_APPS] ?: home.includeOtherApps,
             grouping = enumOrDefault<MediaGrouping>(this[Keys.HOME_GROUPING], home.grouping),
         ),
+        people = PeopleSettings(detectFaces = this[Keys.DETECT_FACES] ?: defaults.people.detectFaces),
     )
 }
 

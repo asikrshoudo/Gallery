@@ -10,6 +10,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +45,8 @@ import com.gallery.thekami.ui.home.HomeUiState
 import com.gallery.thekami.ui.home.HomeViewModel
 import com.gallery.thekami.ui.search.SearchScreen
 import com.gallery.thekami.ui.search.SearchViewModel
+import com.gallery.thekami.ui.settings.SettingsScreen
+import com.gallery.thekami.ui.settings.SettingsViewModel
 import com.gallery.thekami.ui.viewer.ViewerScreen
 import com.gallery.thekami.ui.viewer.ViewerSession
 import com.gallery.thekami.ui.viewer.ViewerViewModel
@@ -56,12 +60,14 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     val viewer: ViewerViewModel = viewModel()
     val marksModel: MarksViewModel = viewModel(factory = MarksViewModel.Factory)
     val search: SearchViewModel = viewModel(factory = SearchViewModel.Factory)
-    val marks by marksModel.marks.collectAsStateWithLifecycle()
+    val settingsModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
     val uiState by home.uiState.collectAsStateWithLifecycle()
-    val homeSettings by home.homeSettings.collectAsStateWithLifecycle()
     val isRefreshing by home.isRefreshing.collectAsStateWithLifecycle()
     val collectionsState by collections.state.collectAsStateWithLifecycle()
     val albums by collections.albums.collectAsStateWithLifecycle()
+    val people by collections.people.collectAsStateWithLifecycle()
+    val faceCounts by collections.faceCounts.collectAsStateWithLifecycle()
+    val marks by marksModel.marks.collectAsStateWithLifecycle()
     val viewerSession by viewer.session.collectAsStateWithLifecycle()
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -85,13 +91,14 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     // Registered last, so it wins: Back closes the viewer first.
     BackHandler(enabled = viewerSession != null) { viewer.close() }
 
-    val overlayOpen = nav.searchOpen || viewerSession != null
+    val overlayOpen = nav.searchOpen || nav.settingsOpen || viewerSession != null
     val requestAccess = { permissionLauncher.launch(home.permissionsToRequest().toTypedArray()) }
 
     val collectionsActions = CollectionsActions(
         push = { route -> nav = nav.push(route) },
         pop = { nav = nav.pop() },
         openSearch = { nav = nav.openSearch() },
+        openGallerySettings = { nav = nav.openSettings() },
         openMedia = { sequence, item ->
             val pairs = (collectionsState as? CollectionsState.Ready)?.livePairs ?: emptyMap()
             viewer.open(sequence, item.key, pairs)
@@ -105,83 +112,101 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
         addMedia = { id, keys -> collections.addMedia(id, keys) },
         removeMedia = { id, keys -> collections.removeMedia(id, keys) },
         setCover = { id, key -> collections.setCover(id, key) },
+        createPerson = { name, relationship -> collections.createPerson(name, relationship) },
+        editPerson = { id, name, relationship -> collections.editPerson(id, name, relationship) },
+        deletePerson = { id -> collections.deletePerson(id) },
+        mergePerson = { targetId, sourceId -> collections.mergePerson(targetId, sourceId) },
+        addPersonMedia = { id, keys -> collections.addPersonMedia(id, keys) },
+        removePersonMedia = { id, keys -> collections.removePersonMedia(id, keys) },
+        setPersonCover = { id, key -> collections.setPersonCover(id, key) },
     )
 
     CompositionLocalProvider(LocalMediaMarks provides marks) {
-    Box(Modifier.fillMaxSize()) {
-        Scaffold(
-            // Hide the shell from accessibility services while an overlay covers it.
-            modifier = if (overlayOpen) Modifier.clearAndSetSemantics {} else Modifier,
-            containerColor = MaterialTheme.colorScheme.background,
-            bottomBar = {
-                GalleryBottomBar(
-                    selected = nav.selected,
-                    showSearch = nav.showsBottomSearch,
-                    style = navBarStyle,
-                    onSelect = { nav = nav.select(it) },
-                    onSearch = { nav = nav.openSearch() },
-                )
-            },
-        ) { padding ->
-            Crossfade(targetState = nav.selected, animationSpec = tween(150), label = "destination") { destination ->
-                when (destination) {
-                    TopLevelDestination.Home -> HomeScreen(
-                        contentPadding = padding,
-                        uiState = uiState,
-                        settings = homeSettings,
-                        isRefreshing = isRefreshing,
-                        onRequestAccess = { requestAccess() },
-                        onOpenSettings = { openAppSettings(context) },
-                        onRefresh = home::refresh,
-                        onSettingsChange = home::setHomeSettings,
-                        onOpenMedia = { item ->
-                            (uiState as? HomeUiState.Ready)?.let { viewer.open(it.sequence, item.key, it.livePairs) }
-                        },
+        Box(Modifier.fillMaxSize()) {
+            Scaffold(
+                // Hide the shell from accessibility services while an overlay covers it.
+                modifier = if (overlayOpen) Modifier.clearAndSetSemantics {} else Modifier,
+                containerColor = MaterialTheme.colorScheme.background,
+                bottomBar = {
+                    GalleryBottomBar(
+                        selected = nav.selected,
+                        showSearch = nav.showsBottomSearch,
+                        style = navBarStyle,
+                        onSelect = { nav = nav.select(it) },
+                        onSearch = { nav = nav.openSearch() },
                     )
-                    TopLevelDestination.Collections -> CollectionsHost(
-                        route = nav.collectionsRoute,
-                        state = collectionsState,
-                        contentPadding = padding,
-                        actions = collectionsActions,
+                },
+            ) { padding ->
+                Crossfade(targetState = nav.selected, animationSpec = tween(150), label = "destination") { destination ->
+                    when (destination) {
+                        TopLevelDestination.Home -> HomeScreen(
+                            contentPadding = padding,
+                            uiState = uiState,
+                            isRefreshing = isRefreshing,
+                            onRequestAccess = { requestAccess() },
+                            onOpenSettings = { openAppSettings(context) },
+                            onRefresh = home::refresh,
+                            onOpenGallerySettings = { nav = nav.openSettings() },
+                            onOpenMedia = { item ->
+                                (uiState as? HomeUiState.Ready)?.let { viewer.open(it.sequence, item.key, it.livePairs) }
+                            },
+                        )
+                        TopLevelDestination.Collections -> CollectionsHost(
+                            route = nav.collectionsRoute,
+                            depth = nav.collectionsStack.size,
+                            state = collectionsState,
+                            faceCounts = faceCounts,
+                            contentPadding = padding,
+                            actions = collectionsActions,
+                        )
+                    }
+                }
+            }
+            AnimatedVisibility(
+                visible = nav.searchOpen,
+                enter = fadeIn(tween(150)),
+                exit = fadeOut(tween(150)),
+            ) {
+                SearchScreen(
+                    viewModel = search,
+                    onClose = { nav = nav.closeSearch() },
+                    onOpenMedia = { sequence, item, pairs -> viewer.open(sequence, item.key, pairs) },
+                    onRequestAccess = { requestAccess() },
+                    onOpenSettings = { openAppSettings(context) },
+                    onRefresh = home::refresh,
+                    // The viewer opens on top of Search; hide Search from accessibility while it does.
+                    modifier = if (viewerSession != null) Modifier.clearAndSetSemantics {} else Modifier,
+                )
+            }
+            AnimatedVisibility(
+                visible = nav.settingsOpen,
+                enter = slideInHorizontally(tween(300)) { it } + fadeIn(tween(200)),
+                exit = slideOutHorizontally(tween(260)) { it } + fadeOut(tween(200)),
+            ) {
+                SettingsScreen(viewModel = settingsModel, onClose = { nav = nav.closeSettings() })
+            }
+            AnimatedVisibility(
+                visible = viewerSession != null,
+                enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.96f),
+                exit = fadeOut(tween(150)) + scaleOut(tween(150), targetScale = 0.96f),
+            ) {
+                (viewerSession ?: lastViewerSession)?.let {
+                    ViewerScreen(
+                        session = it,
+                        viewModel = viewer,
+                        albums = albums,
+                        people = people,
+                        marks = marks,
+                        onToggleFavourite = marksModel::toggleFavourite,
+                        onTogglePinned = marksModel::togglePinned,
+                        onToggleAlbum = { albumId, key, add -> collections.toggleMedia(albumId, key, add) },
+                        onCreateAlbum = { name, key -> collections.createAlbum(name, key) },
+                        onTogglePerson = { personId, key, add -> collections.togglePerson(personId, key, add) },
+                        onCreatePerson = { name, relationship, key -> collections.createPerson(name, relationship, key) },
+                        onMediaChanged = home::onMediaChanged,
                     )
                 }
             }
         }
-        AnimatedVisibility(
-            visible = nav.searchOpen,
-            enter = fadeIn(tween(150)),
-            exit = fadeOut(tween(150)),
-        ) {
-            SearchScreen(
-                viewModel = search,
-                onClose = { nav = nav.closeSearch() },
-                onOpenMedia = { sequence, item, pairs -> viewer.open(sequence, item.key, pairs) },
-                onRequestAccess = { requestAccess() },
-                onOpenSettings = { openAppSettings(context) },
-                onRefresh = home::refresh,
-                // The viewer opens on top of Search; hide Search from accessibility while it does.
-                modifier = if (viewerSession != null) Modifier.clearAndSetSemantics {} else Modifier,
-            )
-        }
-        AnimatedVisibility(
-            visible = viewerSession != null,
-            enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.96f),
-            exit = fadeOut(tween(150)) + scaleOut(tween(150), targetScale = 0.96f),
-        ) {
-            (viewerSession ?: lastViewerSession)?.let {
-                ViewerScreen(
-                    session = it,
-                    viewModel = viewer,
-                    albums = albums,
-                    marks = marks,
-                    onToggleFavourite = marksModel::toggleFavourite,
-                    onTogglePinned = marksModel::togglePinned,
-                    onToggleAlbum = { albumId, key, add -> collections.toggleMedia(albumId, key, add) },
-                    onCreateAlbum = { name, key -> collections.createAlbum(name, key) },
-                    onMediaChanged = home::onMediaChanged,
-                )
-            }
-        }
-    }
     }
 }

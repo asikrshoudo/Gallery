@@ -11,6 +11,7 @@ val NavigationStateSaver = listSaver<NavigationState, Any>(
             state.selected.name,
             state.searchOpen,
             ArrayList(state.collectionsStack.map { it.encode() }),
+            state.settingsOpen,
         )
     },
     restore = { saved ->
@@ -21,6 +22,7 @@ val NavigationStateSaver = listSaver<NavigationState, Any>(
                 ?: TopLevelDestination.Home,
             searchOpen = saved[1] as Boolean,
             collectionsStack = stack,
+            settingsOpen = saved.getOrNull(3) as? Boolean ?: false,
         )
     },
 )

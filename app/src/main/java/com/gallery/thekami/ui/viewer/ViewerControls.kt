@@ -64,6 +64,7 @@ fun ViewerTopBar(
     onDelete: () -> Unit,
     onAddToAlbum: () -> Unit,
     onTogglePinned: () -> Unit,
+    onTagPeople: () -> Unit,
     onInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -95,6 +96,10 @@ fun ViewerTopBar(
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.viewer_add_to_album)) },
                     onClick = { menuOpen = false; onAddToAlbum() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.viewer_tag_people)) },
+                    onClick = { menuOpen = false; onTagPeople() },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(if (isPinned) R.string.viewer_unpin else R.string.viewer_pin)) },

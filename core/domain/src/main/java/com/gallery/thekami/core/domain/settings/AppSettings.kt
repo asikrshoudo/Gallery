@@ -24,10 +24,14 @@ data class HomeSettings(
     val grouping: MediaGrouping = MediaGrouping.Day,
 )
 
+/** [detectFaces] is opt-in and off by default. */
+data class PeopleSettings(val detectFaces: Boolean = false)
+
 /** App-wide preferences. Defaults: dark theme, Ubuntu Mono, standard bottom navigation. */
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.Dark,
     val fontChoice: FontChoice = FontChoice.UbuntuMono,
     val navBarStyle: NavBarStyle = NavBarStyle.Standard,
     val home: HomeSettings = HomeSettings(),
+    val people: PeopleSettings = PeopleSettings(),
 )

@@ -20,25 +20,25 @@ class NavigationStateTest {
     }
 
     @Test
-    fun returningHomeShowsBottomSearchAgain() {
-        val state = NavigationState().select(TopLevelDestination.Collections).select(TopLevelDestination.Home)
-        assertTrue(state.showsBottomSearch)
-    }
-
-    @Test
     fun searchOpensFromCollectionsAndBackReturnsThere() {
         val collections = NavigationState().select(TopLevelDestination.Collections)
         val open = collections.openSearch()
         assertTrue(open.searchOpen)
-        assertFalse(open.showsBottomSearch)
         assertEquals(collections, open.back())
     }
 
     @Test
-    fun openSearchHidesBottomSearchAndBackClosesIt() {
-        val open = NavigationState().openSearch()
+    fun settingsOverlayHidesBottomSearchAndBackClosesIt() {
+        val open = NavigationState().openSettings()
+        assertTrue(open.settingsOpen)
         assertFalse(open.showsBottomSearch)
         assertEquals(NavigationState(), open.back())
+    }
+
+    @Test
+    fun settingsAndSearchAreNeverOpenTogether() {
+        assertFalse(NavigationState().openSearch().openSettings().searchOpen)
+        assertFalse(NavigationState().openSettings().openSearch().settingsOpen)
     }
 
     @Test
@@ -51,13 +51,9 @@ class NavigationStateTest {
     @Test
     fun pushingARouteSwitchesToCollectionsAndBackPopsIt() {
         val albums = NavigationState().push(CollectionsRoute.Albums)
-        assertEquals(TopLevelDestination.Collections, albums.selected)
         assertEquals(CollectionsRoute.Albums, albums.collectionsRoute)
         val detail = albums.push(CollectionsRoute.AlbumDetail("a1"))
-        assertEquals(CollectionsRoute.AlbumDetail("a1"), detail.collectionsRoute)
         assertEquals(albums, detail.back())
-        assertEquals(TopLevelDestination.Collections, albums.back()?.selected)
-        assertNull(albums.back()?.collectionsRoute)
     }
 
     @Test

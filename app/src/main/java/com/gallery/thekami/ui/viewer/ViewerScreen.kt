@@ -3,7 +3,6 @@
 package com.gallery.thekami.ui.viewer
 
 import android.app.Activity
-import android.os.Build
 import android.view.accessibility.AccessibilityManager
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -36,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -68,27 +69,32 @@ import com.gallery.thekami.R
 import com.gallery.thekami.core.domain.album.Album
 import com.gallery.thekami.core.domain.media.MediaItem
 import com.gallery.thekami.core.domain.media.MediaMarks
+import com.gallery.thekami.core.domain.people.Person
+import com.gallery.thekami.core.domain.people.Relationship
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
-private enum class ViewerDialog { Info, AddToAlbum, ConfirmDelete, DeleteUnsupported, DeleteFailed }
+private enum class ViewerDialog { Info, AddToAlbum, TagPeople, ConfirmDelete, DeleteUnsupported, DeleteFailed }
 
 /**
  * Full-screen viewer over [session].items (the sequence it was opened from). The pager, the
  * filmstrip and the playback target are all derived from the pager's current page, so they
  * cannot disagree. Controls hide on tap, and stay visible when TalkBack-style touch
- * exploration is on.
+ * exploration is on. Dragging a photo down (or up) at 1x closes the viewer.
  */
 @Composable
 fun ViewerScreen(
     session: ViewerSession,
     viewModel: ViewerViewModel,
     albums: List<Album>,
+    people: List<Person>,
     marks: MediaMarks,
     onToggleFavourite: (String) -> Unit,
     onTogglePinned: (String) -> Unit,
     onToggleAlbum: (albumId: String, key: String, add: Boolean) -> Unit,
     onCreateAlbum: (name: String, key: String) -> Unit,
+    onTogglePerson: (personId: String, key: String, add: Boolean) -> Unit,
+    onCreatePerson: (name: String, relationship: Relationship?, key: String) -> Unit,
     onMediaChanged: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -110,8 +116,9 @@ fun ViewerScreen(
     }
 
     var controlsVisible by rememberSaveable { mutableStateOf(true) }
+    var dragProgress by remember { mutableFloatStateOf(0f) }
     val touchExploration = rememberTouchExplorationEnabled()
-    val showControls = controlsVisible || touchExploration
+    val showControls = (controlsVisible || touchExploration) && dragProgress < 0.02f
     val toggleControls = { controlsVisible = !controlsVisible }
     SystemBarsEffect(hidden = !showControls)
 
@@ -144,7 +151,7 @@ fun ViewerScreen(
         }
     }
 
-    Box(modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - 0.85f * dragProgress))) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -164,6 +171,8 @@ fun ViewerScreen(
                     player = playback.player,
                     imageLoader = imageLoader,
                     onTap = toggleControls,
+                    onDismissDrag = { dragProgress = it },
+                    onDismiss = viewModel::close,
                 )
             }
         }
@@ -175,15 +184,16 @@ fun ViewerScreen(
             exit = fadeOut(tween(150)),
         ) {
             ViewerTopBar(
-                onClose = viewModel::close,
                 isFavourite = current != null && marks.isFavourite(current.key),
                 isPinned = current != null && marks.isPinned(current.key),
+                onClose = viewModel::close,
                 onToggleFavourite = { current?.let { onToggleFavourite(it.key) } },
-                onTogglePinned = { current?.let { onTogglePinned(it.key) } },
                 onShare = { current?.let { shareMedia(context, it, context.getString(R.string.viewer_share_title)) } },
-                onAddToAlbum = { dialog = ViewerDialog.AddToAlbum },
-                onInfo = { dialog = ViewerDialog.Info },
                 onDelete = { dialog = if (canTrashFromViewer) ViewerDialog.ConfirmDelete else ViewerDialog.DeleteUnsupported },
+                onAddToAlbum = { dialog = ViewerDialog.AddToAlbum },
+                onTogglePinned = { current?.let { onTogglePinned(it.key) } },
+                onTagPeople = { dialog = ViewerDialog.TagPeople },
+                onInfo = { dialog = ViewerDialog.Info },
             )
         }
 
@@ -237,6 +247,15 @@ fun ViewerScreen(
                 onDismiss = { dialog = null },
             )
         }
+        ViewerDialog.TagPeople -> current?.let {
+            TagPeopleDialog(
+                item = it,
+                people = people,
+                onToggle = onTogglePerson,
+                onCreate = onCreatePerson,
+                onDismiss = { dialog = null },
+            )
+        }
         ViewerDialog.ConfirmDelete -> AlertDialog(
             onDismissRequest = { dialog = null },
             title = { Text(stringResource(R.string.viewer_delete_title)) },
@@ -284,13 +303,22 @@ private fun PhotoPage(
     player: Player,
     imageLoader: ImageLoader,
     onTap: () -> Unit,
+    onDismissDrag: (Float) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     var failed by remember(item.key) { mutableStateOf(false) }
+    var aspect by remember(item.key) { mutableStateOf<Float?>(null) }
     // Decoded to at most 2560px on the long side: sharp when zoomed, never full resolution.
     val request = remember(item.key) { ImageRequest.Builder(context).data(item.uri).size(2560, 2560).build() }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        ZoomableBox(isCurrent = isCurrent, onTap = onTap) {
+        ZoomableBox(
+            isCurrent = isCurrent,
+            contentAspect = aspect,
+            onTap = onTap,
+            onDismissDrag = onDismissDrag,
+            onDismiss = onDismiss,
+        ) {
             if (failed) {
                 ErrorBlock(stringResource(R.string.viewer_photo_error), stringResource(R.string.viewer_photo_error_detail))
             } else {
@@ -299,6 +327,10 @@ private fun PhotoPage(
                     imageLoader = imageLoader,
                     contentDescription = item.displayName,
                     contentScale = ContentScale.Fit,
+                    onSuccess = { state ->
+                        val size = state.painter.intrinsicSize
+                        if (size.isSpecified && size.height > 0f) aspect = size.width / size.height
+                    },
                     onError = { failed = true },
                     modifier = Modifier.fillMaxSize(),
                 )

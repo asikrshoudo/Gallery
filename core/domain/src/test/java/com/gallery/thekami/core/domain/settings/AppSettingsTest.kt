@@ -2,6 +2,7 @@ package com.gallery.thekami.core.domain.settings
 
 import com.gallery.thekami.core.domain.media.MediaGrouping
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,5 +21,10 @@ class AppSettingsTest {
         assertEquals(HomeViewMode.CameraRoll, home.viewMode)
         assertEquals(MediaGrouping.Day, home.grouping)
         assertTrue(home.includePhotos && home.includeVideos && home.includeScreenshots && home.includeOtherApps)
+    }
+
+    @Test
+    fun faceDetectionIsOptInAndOffByDefault() {
+        assertFalse(AppSettings().people.detectFaces)
     }
 }

@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 7 (search, favourites, pinned, details). People, Trash and editing come in later phases.
+> Status: Phase 8 (People) plus viewer polish and Settings. Trash, editing and widgets come in later phases.
 
 ## Architecture
 
@@ -135,3 +135,27 @@ The full list is held in memory as metadata only (no pixels), without paging.
 - Details (viewer menu) lists only metadata MediaStore reported. GPS is shown only when
   MediaStore provides it (Android 9 and below); newer Android versions hide it without extra
   permission, and Gallery does not request that permission yet.
+
+## People (what works and what does not)
+
+- **Works:** People you create yourself, with an optional relationship (girlfriend/boyfriend,
+  partner/spouse, parent, grandparent, sibling, child, relative, friend, best friend, colleague,
+  or a custom label). You tag photos with them (viewer menu > Tag people, or from the person's
+  page), rename, merge two people, remove wrongly tagged photos and choose a cover. Everything is
+  stored only on this device, by media URI, and never changes the files.
+- **Optional face detection (off by default):** Settings > People. It uses Android's built-in
+  `android.media.FaceDetector` to count faces per photo (front-facing, upright faces only; it can
+  miss or mis-detect) so photos with faces can be listed first when adding photos to a person.
+  Only a face count per photo is stored. It is incremental, cached, pauses in battery saver and is
+  unavailable on low-RAM devices. It does not identify or compare people.
+- **Not implemented:** automatic recognition or grouping of the same person across photos. That
+  needs a face-embedding model whose licence and accuracy were not verified for this project.
+  Google ML Kit was not used because it is a proprietary binary, which does not fit a GPL-3.0
+  project or F-Droid-style distribution. Relationships are never inferred.
+- Face-derived data never leaves the device.
+
+## Settings
+
+Appearance (theme, font, navigation bar), Home (view, grouping, filters), People, and About
+(version, licences, privacy). Every control writes to the single settings store that the rest of
+the app reads, so changes apply immediately and persist across restarts.
