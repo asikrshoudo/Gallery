@@ -15,7 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -67,7 +67,7 @@ private fun DateHeader(header: TimelineEntry.Header) {
     val today = stringResource(R.string.timeline_today)
     val yesterday = stringResource(R.string.timeline_yesterday)
     val noDate = stringResource(R.string.timeline_no_date)
-    val locale = LocalContext.current.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     val label = remember(header.grouping, header.start, locale, today) {
         timelineHeaderLabel(header.grouping, header.start, LocalDate.now(), locale, today, yesterday, noDate)
     }
