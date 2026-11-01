@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
@@ -91,6 +93,22 @@ fun CollectionsRootScreen(state: CollectionsState.Ready, bottomPadding: Dp, acti
         }
         item { CollectionRow(Icons.Filled.DateRange, stringResource(R.string.collections_moments), unavailable, null) }
         item { CollectionRow(Icons.Filled.Place, stringResource(R.string.collections_places), unavailable, null) }
+        item {
+            CollectionRow(
+                icon = Icons.Filled.Lock,
+                title = stringResource(R.string.private_title),
+                subtitle = stringResource(R.string.private_row_subtitle),
+                onClick = { actions.push(CollectionsRoute.Private) },
+            )
+        }
+        item {
+            CollectionRow(
+                icon = Icons.Filled.Delete,
+                title = stringResource(R.string.trash_title),
+                subtitle = stringResource(R.string.trash_row_subtitle),
+                onClick = { actions.push(CollectionsRoute.Trash) },
+            )
+        }
     }
 }
 

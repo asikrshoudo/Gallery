@@ -40,3 +40,23 @@ fun createTrashRequest(context: Context, item: MediaItem): IntentSender? {
         null
     }
 }
+
+/** Restore ([trash] = false) or trash ([trash] = true) several items. Android asks the user to confirm. */
+fun trashRequest(context: Context, items: List<MediaItem>, trash: Boolean): IntentSender? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || items.isEmpty()) return null
+    return try {
+        MediaStore.createTrashRequest(context.contentResolver, items.map { Uri.parse(it.uri) }, trash).intentSender
+    } catch (e: RuntimeException) {
+        null
+    }
+}
+
+/** Permanent delete. Android asks the user to confirm and nothing happens if they decline. */
+fun deleteRequest(context: Context, items: List<MediaItem>): IntentSender? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || items.isEmpty()) return null
+    return try {
+        MediaStore.createDeleteRequest(context.contentResolver, items.map { Uri.parse(it.uri) }).intentSender
+    } catch (e: RuntimeException) {
+        null
+    }
+}

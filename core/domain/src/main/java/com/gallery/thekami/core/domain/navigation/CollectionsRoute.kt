@@ -28,6 +28,18 @@ sealed interface CollectionsRoute {
         override fun encode() = "people"
     }
 
+    data object Trash : CollectionsRoute {
+        override fun encode() = "trash"
+    }
+
+    data object Private : CollectionsRoute {
+        override fun encode() = "private"
+    }
+
+    data object HiddenTrash : CollectionsRoute {
+        override fun encode() = "hidden-trash"
+    }
+
     data class AlbumDetail(val albumId: String) : CollectionsRoute {
         override fun encode() = "album:$albumId"
     }
@@ -59,6 +71,9 @@ sealed interface CollectionsRoute {
                 "favourites" -> Favourites
                 "pinned" -> Pinned
                 "people" -> People
+                "trash" -> Trash
+                "private" -> Private
+                "hidden-trash" -> HiddenTrash
                 "album" -> AlbumDetail(id)
                 "picker" -> AlbumPicker(id)
                 "folder" -> FolderDetail(id)

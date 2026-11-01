@@ -7,6 +7,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.BaseColumns
 import android.provider.MediaStore
 import com.gallery.thekami.core.domain.media.MediaItem
@@ -14,6 +15,7 @@ import com.gallery.thekami.core.domain.media.MediaLocation
 import com.gallery.thekami.core.domain.media.MediaPaths
 import com.gallery.thekami.core.domain.media.MediaType
 import com.gallery.thekami.core.domain.media.distinctMedia
+import com.gallery.thekami.core.domain.trash.TrashedMedia
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -44,6 +46,36 @@ internal class MediaStoreDataSource(context: Context) {
         }
         if (denied == MediaType.entries.size) throw SecurityException("No media access")
         QueryResult(distinctMedia(items), skipped)
+    }
+
+    /** Items in MediaStore's own Trash (Android 11+) with the time Android will delete them. */
+    suspend fun queryTrashed(): List<TrashedMedia> = withContext(Dispatchers.IO) {
+        val result = ArrayList<TrashedMedia>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            for (type in MediaType.entries) {
+                val collection = collectionUri(type)
+                val args = Bundle().apply { putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY) }
+                val columns = projection(type, includeLocation = false) + "date_expires"
+                val cursor = try {
+                    resolver.query(collection, columns, args, null)
+                } catch (e: SecurityException) {
+                    null
+                } ?: continue
+                cursor.use { c ->
+                    val ix = ColumnIndexes(c)
+                    while (c.moveToNext()) {
+                        val item = try {
+                            read(c, ix, collection, type)
+                        } catch (e: RuntimeException) {
+                            null
+                        } ?: continue
+                        val expires = c.longOrNull(ix.expires)?.takeIf { it > 0 }?.let { it * 1000 }
+                        result += TrashedMedia(item, expires)
+                    }
+                }
+            }
+        }
+        result
     }
 
     private suspend fun query(type: MediaType): QueryResult {
@@ -134,6 +166,7 @@ internal class MediaStoreDataSource(context: Context) {
         val duration = c.getColumnIndex(MediaStore.Video.VideoColumns.DURATION)
         val latitude = c.getColumnIndex(MediaStore.Images.ImageColumns.LATITUDE)
         val longitude = c.getColumnIndex(MediaStore.Images.ImageColumns.LONGITUDE)
+        val expires = c.getColumnIndex("date_expires")
     }
 
     /** Returns null for rows that cannot be used (for example no MIME type). */

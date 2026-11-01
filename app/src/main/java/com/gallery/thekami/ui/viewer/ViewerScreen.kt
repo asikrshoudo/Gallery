@@ -74,7 +74,10 @@ import com.gallery.thekami.core.domain.people.Relationship
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
-private enum class ViewerDialog { Info, AddToAlbum, TagPeople, ConfirmDelete, DeleteUnsupported, DeleteFailed }
+private enum class ViewerDialog {
+    Info, AddToAlbum, TagPeople, ConfirmDelete, DeleteUnsupported, DeleteFailed,
+    MovePrivate, MoveOutPrivate, PrivateDelete,
+}
 
 /**
  * Full-screen viewer over [session].items (the sequence it was opened from). The pager, the
@@ -95,6 +98,7 @@ fun ViewerScreen(
     onCreateAlbum: (name: String, key: String) -> Unit,
     onTogglePerson: (personId: String, key: String, add: Boolean) -> Unit,
     onCreatePerson: (name: String, relationship: Relationship?, key: String) -> Unit,
+    privateActions: PrivateViewerActions,
     onMediaChanged: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -186,13 +190,22 @@ fun ViewerScreen(
             ViewerTopBar(
                 isFavourite = current != null && marks.isFavourite(current.key),
                 isPinned = current != null && marks.isPinned(current.key),
+                isPrivate = session.isPrivate,
                 onClose = viewModel::close,
                 onToggleFavourite = { current?.let { onToggleFavourite(it.key) } },
                 onShare = { current?.let { shareMedia(context, it, context.getString(R.string.viewer_share_title)) } },
-                onDelete = { dialog = if (canTrashFromViewer) ViewerDialog.ConfirmDelete else ViewerDialog.DeleteUnsupported },
+                onDelete = {
+                    dialog = when {
+                        session.isPrivate -> ViewerDialog.PrivateDelete
+                        canTrashFromViewer -> ViewerDialog.ConfirmDelete
+                        else -> ViewerDialog.DeleteUnsupported
+                    }
+                },
                 onAddToAlbum = { dialog = ViewerDialog.AddToAlbum },
                 onTogglePinned = { current?.let { onTogglePinned(it.key) } },
                 onTagPeople = { dialog = ViewerDialog.TagPeople },
+                onMoveToPrivate = { dialog = ViewerDialog.MovePrivate },
+                onMoveOutOfPrivate = { dialog = ViewerDialog.MoveOutPrivate },
                 onInfo = { dialog = ViewerDialog.Info },
             )
         }
@@ -256,6 +269,30 @@ fun ViewerScreen(
                 onDismiss = { dialog = null },
             )
         }
+        ViewerDialog.MovePrivate -> ConfirmDialog(
+            R.string.private_move_title, R.string.private_move_message, R.string.private_move_confirm,
+            onConfirm = {
+                dialog = null
+                current?.let(privateActions.moveToPrivate)
+            },
+            onDismiss = { dialog = null },
+        )
+        ViewerDialog.MoveOutPrivate -> ConfirmDialog(
+            R.string.private_moveout_title, R.string.private_moveout_message, R.string.private_moveout_confirm,
+            onConfirm = {
+                dialog = null
+                current?.let(privateActions.moveOut)
+            },
+            onDismiss = { dialog = null },
+        )
+        ViewerDialog.PrivateDelete -> ConfirmDialog(
+            R.string.private_delete_title, R.string.private_delete_message, R.string.private_delete_confirm,
+            onConfirm = {
+                dialog = null
+                current?.let(privateActions.deleteFromPrivate)
+            },
+            onDismiss = { dialog = null },
+        )
         ViewerDialog.ConfirmDelete -> AlertDialog(
             onDismissRequest = { dialog = null },
             title = { Text(stringResource(R.string.viewer_delete_title)) },
@@ -283,6 +320,17 @@ fun ViewerScreen(
         ) { dialog = null }
         null -> Unit
     }
+}
+
+@Composable
+private fun ConfirmDialog(title: Int, message: Int, confirm: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(title)) },
+        text = { Text(stringResource(message)) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(confirm)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.viewer_cancel)) } },
+    )
 }
 
 @Composable

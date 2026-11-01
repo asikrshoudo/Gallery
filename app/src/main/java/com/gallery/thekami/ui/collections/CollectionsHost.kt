@@ -59,6 +59,8 @@ fun CollectionsHost(
     depth: Int,
     state: CollectionsState,
     faceCounts: Map<String, Int>,
+    privateArea: PrivateAreaUi,
+    trash: TrashUi,
     contentPadding: PaddingValues,
     actions: CollectionsActions,
     modifier: Modifier = Modifier,
@@ -87,7 +89,7 @@ fun CollectionsHost(
                     }
                 },
                 label = "collectionsPage",
-            ) { page -> RouteContent(page.route, state, faceCounts, bottom, actions) }
+            ) { page -> RouteContent(page.route, state, faceCounts, privateArea, trash, bottom, actions) }
         }
     }
 }
@@ -97,6 +99,8 @@ private fun RouteContent(
     route: CollectionsRoute?,
     state: CollectionsState.Ready,
     faceCounts: Map<String, Int>,
+    privateArea: PrivateAreaUi,
+    trash: TrashUi,
     bottom: Dp,
     actions: CollectionsActions,
 ) {
@@ -113,5 +117,8 @@ private fun RouteContent(
         CollectionsRoute.People -> PeopleScreen(state, bottom, actions)
         is CollectionsRoute.PersonDetail -> PersonDetailScreen(state, route.personId, bottom, actions)
         is CollectionsRoute.PersonPicker -> PersonPickerScreen(state, route.personId, faceCounts, bottom, actions)
+        CollectionsRoute.Trash -> TrashScreen(trash, bottom, actions)
+        CollectionsRoute.Private -> PrivateScreen(privateArea, bottom, actions)
+        CollectionsRoute.HiddenTrash -> HiddenTrashScreen(privateArea, bottom, actions)
     }
 }

@@ -3,7 +3,7 @@
 An Android-first, open-source gallery app. Android application ID: `com.gallery.thekami`.
 Website: https://thekami.tech
 
-> Status: Phase 8 (People) plus viewer polish and Settings. Trash, editing and widgets come in later phases.
+> Status: Phase 9 (Trash, Hidden Trash, Private). Moments, widgets, Places and editing come in later phases.
 
 ## Architecture
 
@@ -159,3 +159,30 @@ The full list is held in memory as metadata only (no pixels), without paging.
 Appearance (theme, font, navigation bar), Home (view, grouping, filters), People, and About
 (version, licences, privacy). Every control writes to the single settings store that the rest of
 the app reads, so changes apply immediately and persist across restarts.
+
+## Trash and Private
+
+- **Trash (Android 11+):** the viewer moves an item to MediaStore's own Trash after Android's
+  confirmation. Android deletes trashed items by itself after about 30 days; that timer is
+  Android's, not Gallery's. Collections > Trash lists what Android lets Gallery see, with days
+  left, and restores (back where the file was) or deletes forever. Android confirms each of those.
+  Trashed items are excluded from Home, search and collections by MediaStore. On Android 10 and
+  below Gallery cannot trash or delete.
+- **Private:** an item is copied into Gallery's app-private storage and verified (size and
+  SHA-256). Only then Gallery offers to delete the original, and it asks first (and Android asks
+  again). If the original is kept it stays visible in the gallery and to other apps. Access
+  requires the device screen lock; with no screen lock set, Private stays unavailable. It locks
+  whenever the app leaves the foreground, the screen is excluded from screenshots/recents while
+  open, image caches are cleared on lock, and private items have no share, favourite, album or
+  tagging actions. Private items are not in MediaStore, so they never reach Home, search,
+  albums, folders or widgets.
+- **Private is not encrypted by Gallery.** It relies on Android's app sandbox and file-based
+  encryption, a screen-lock gate, and being excluded from backups. A rooted device, or anyone
+  with your unlocked phone, can reach it. **Clearing Gallery's data or uninstalling the app
+  permanently deletes all private files, and they cannot be recovered.**
+- **Hidden Trash (about 2 days):** deleting a private item parks it here and it can be restored.
+  After 2 days it is only flagged as expired; Gallery asks before deleting it for good and never
+  deletes anything just because a timer was checked late.
+- **Move out of Private** (Android 10+) copies the item back into MediaStore, in its original
+  folder when Android allows it (otherwise Pictures/Gallery or Movies/Gallery), checks it, then
+  removes the private copy.

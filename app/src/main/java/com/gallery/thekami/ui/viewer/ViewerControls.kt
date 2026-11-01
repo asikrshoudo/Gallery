@@ -58,6 +58,7 @@ import com.gallery.thekami.core.ui.theme.GalleryColors
 fun ViewerTopBar(
     isFavourite: Boolean,
     isPinned: Boolean,
+    isPrivate: Boolean,
     onClose: () -> Unit,
     onToggleFavourite: () -> Unit,
     onShare: () -> Unit,
@@ -65,6 +66,8 @@ fun ViewerTopBar(
     onAddToAlbum: () -> Unit,
     onTogglePinned: () -> Unit,
     onTagPeople: () -> Unit,
+    onMoveToPrivate: () -> Unit,
+    onMoveOutOfPrivate: () -> Unit,
     onInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,32 +82,46 @@ fun ViewerTopBar(
     ) {
         BarIcon(Icons.Filled.Close, R.string.viewer_close, onClose)
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = onToggleFavourite) {
-            Icon(
-                imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                contentDescription = stringResource(
-                    if (isFavourite) R.string.viewer_favourite_remove else R.string.viewer_favourite_add,
-                ),
-                tint = if (isFavourite) GalleryColors.Lime else Color.White,
-            )
+        // Private items have no favourite or share: they must not leave Private by accident.
+        if (!isPrivate) {
+            IconButton(onClick = onToggleFavourite) {
+                Icon(
+                    imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = stringResource(
+                        if (isFavourite) R.string.viewer_favourite_remove else R.string.viewer_favourite_add,
+                    ),
+                    tint = if (isFavourite) GalleryColors.Lime else Color.White,
+                )
+            }
+            BarIcon(Icons.Filled.Share, R.string.viewer_share, onShare)
         }
-        BarIcon(Icons.Filled.Share, R.string.viewer_share, onShare)
         BarIcon(Icons.Filled.Delete, R.string.viewer_delete, onDelete)
         Box {
             BarIcon(Icons.Filled.MoreVert, R.string.menu_more) { menuOpen = true }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.viewer_add_to_album)) },
-                    onClick = { menuOpen = false; onAddToAlbum() },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.viewer_tag_people)) },
-                    onClick = { menuOpen = false; onTagPeople() },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(if (isPinned) R.string.viewer_unpin else R.string.viewer_pin)) },
-                    onClick = { menuOpen = false; onTogglePinned() },
-                )
+                if (isPrivate) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.viewer_move_out)) },
+                        onClick = { menuOpen = false; onMoveOutOfPrivate() },
+                    )
+                } else {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.viewer_add_to_album)) },
+                        onClick = { menuOpen = false; onAddToAlbum() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.viewer_tag_people)) },
+                        onClick = { menuOpen = false; onTagPeople() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (isPinned) R.string.viewer_unpin else R.string.viewer_pin)) },
+                        onClick = { menuOpen = false; onTogglePinned() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.viewer_move_to_private)) },
+                        onClick = { menuOpen = false; onMoveToPrivate() },
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.viewer_info)) },
                     onClick = { menuOpen = false; onInfo() },

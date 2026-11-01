@@ -69,7 +69,7 @@
     <string name="viewer_share_title">Share</string>
     <string name="viewer_cancel">Cancel</string>
     <string name="viewer_delete_title">Move to Trash?</string>
-    <string name="viewer_delete_message">This item will be moved to Trash. Android removes trashed items automatically after about 30 days. Restoring from inside Gallery arrives in a later update.</string>
+    <string name="viewer_delete_message">This item will be moved to Trash. Android removes trashed items automatically after about 30 days. You can restore it from Collections, Trash until then.</string>
     <string name="viewer_delete_confirm">Move to Trash</string>
     <string name="viewer_delete_unsupported_title">Delete isn\'t available</string>
     <string name="viewer_delete_unsupported_message">Deleting from Gallery needs Android 11 or newer in this version.</string>
@@ -260,4 +260,83 @@
     <string name="rel_colleague">Colleague</string>
     <string name="rel_other">Someone else</string>
     <string name="home_filtered_action">Open settings</string>
+
+    <string name="system_request_failed">Android couldn\'t start that request.</string>
+
+    <string name="trash_title">Trash</string>
+    <string name="trash_row_subtitle">Deleted photos and videos</string>
+    <string name="trash_info">Android keeps trashed items for about 30 days, then deletes them automatically. Restore puts a file back where it was; Android confirms each restore or delete.</string>
+    <string name="trash_unsupported_title">Trash needs Android 11</string>
+    <string name="trash_unsupported_message">On Android 10 and below, Gallery can\'t move items to Trash or delete them from inside the app.</string>
+    <string name="trash_empty_title">Trash is empty</string>
+    <string name="trash_empty_message">Items you delete from the viewer wait here for about 30 days. Gallery only lists what Android lets it see.</string>
+    <string name="trash_failed_message">Gallery couldn\'t read Trash.</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_delete_forever">Delete forever</string>
+    <string name="trash_expired">Expired</string>
+    <string name="trash_unknown_expiry">No expiry</string>
+    <plurals name="trash_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <string name="trash_delete_title">Delete forever?</string>
+    <string name="trash_delete_message">These items will be permanently deleted. This can\'t be undone. Android will ask you to confirm.</string>
+    <string name="trash_hidden_row">Hidden Trash</string>
+    <string name="trash_hidden_row_desc">Deleted private items, kept about 2 days</string>
+
+    <string name="private_title">Private</string>
+    <string name="private_row_subtitle">Protected by your screen lock</string>
+    <string name="private_locked_title">Private is locked</string>
+    <string name="private_locked_message">Unlock with your screen lock (PIN, pattern, password or biometrics) to see your private photos and videos.</string>
+    <string name="private_unlock">Unlock</string>
+    <string name="private_unlock_prompt_title">Unlock Private</string>
+    <string name="private_unlock_prompt_desc">Confirm your screen lock to open Private.</string>
+    <string name="private_no_lock_title">Set a screen lock first</string>
+    <string name="private_no_lock_message">Private needs a PIN, pattern or password on this device, so there is something to protect it.</string>
+    <string name="private_empty_title">Nothing private yet</string>
+    <string name="private_empty_message">Open a photo or video, then choose Move to Private from the menu.</string>
+    <string name="private_storage_note">Private items are kept inside Gallery\'s own app storage, hidden from your gallery, search and other apps, and left out of backups. Gallery does not add its own encryption. Clearing Gallery\'s data or uninstalling it permanently deletes them.</string>
+
+    <string name="viewer_move_to_private">Move to Private</string>
+    <string name="viewer_move_out">Move out of Private</string>
+    <string name="private_move_title">Move to Private?</string>
+    <string name="private_move_message">Gallery copies this item into its private storage and checks the copy. Your original is not touched until you confirm. Private items are protected by your screen lock, hidden from your gallery, search and other apps, and not backed up. If you clear Gallery\'s data or uninstall it, private items are permanently deleted.</string>
+    <string name="private_move_confirm">Copy to Private</string>
+    <string name="private_moveout_title">Move out of Private?</string>
+    <string name="private_moveout_message">A copy is added back to your gallery in its original folder (or Pictures/Gallery, Movies/Gallery), checked, and then the private copy is removed.</string>
+    <string name="private_moveout_confirm">Move out</string>
+    <string name="private_delete_title">Delete from Private?</string>
+    <string name="private_delete_message">It moves to Hidden Trash and stays there about 2 days. After that Gallery asks before deleting it for good.</string>
+    <string name="private_delete_confirm">Move to Hidden Trash</string>
+
+    <string name="private_copying_title">Copying to Private</string>
+    <string name="private_copying_message">Copying and checking \"%1$s\". Your original is not touched.</string>
+    <string name="private_copied_title">Copied to Private</string>
+    <string name="private_copied_message">\"%1$s\" is now stored in Private. Your original is still in your gallery, visible to other apps, until it is deleted. Delete it now? Android will ask you to confirm.</string>
+    <string name="private_copied_message_no_delete">\"%1$s\" is now stored in Private. On Android 10 and below Gallery can\'t delete the original, so it stays in your gallery and remains visible to other apps.</string>
+    <string name="private_delete_original">Delete original</string>
+    <string name="private_keep_original">Keep original</string>
+    <string name="private_original_kept">Your original is still in your gallery. Anyone with access to your gallery can still see it.</string>
+    <string name="private_err_read_title">Couldn\'t copy</string>
+    <string name="private_err_read">Gallery couldn\'t read this file. Nothing was changed.</string>
+    <string name="private_err_space">There isn\'t enough free space to copy this file. Nothing was changed.</string>
+    <string name="private_err_verify">The copy didn\'t match the original, so Gallery discarded it. Nothing was changed.</string>
+    <string name="private_export_done_title">Moved out of Private</string>
+    <string name="private_export_done">A copy is back in your gallery and the private copy was removed.</string>
+    <string name="private_export_unsupported">Moving out of Private needs Android 10 or newer. The item is still in Private.</string>
+    <string name="private_export_failed">Couldn\'t move this item out of Private. It is still in Private.</string>
+    <string name="private_export_title">Move out of Private</string>
+
+    <string name="hidden_trash_title">Hidden Trash</string>
+    <string name="hidden_trash_note">Deleted private items stay here for about 2 days. After that Gallery asks before deleting them for good; it never deletes them silently.</string>
+    <string name="hidden_trash_empty_title">Hidden Trash is empty</string>
+    <string name="hidden_trash_empty_message">Private items you delete wait here for about 2 days.</string>
+    <plurals name="hidden_trash_expired">
+        <item quantity="one">%d item is past its 2-day retention.</item>
+        <item quantity="other">%d items are past their 2-day retention.</item>
+    </plurals>
+    <string name="hidden_trash_delete_expired">Delete expired</string>
+    <string name="hidden_trash_restore">Restore to Private</string>
+    <string name="hidden_delete_title">Delete permanently?</string>
+    <string name="hidden_delete_message">These items will be removed from Private for good. This can\'t be undone.</string>
 </resources>

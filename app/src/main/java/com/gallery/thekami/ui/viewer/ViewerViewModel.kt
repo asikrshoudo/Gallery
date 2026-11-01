@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 data class ViewerSession(
     val items: List<MediaItem>,
     val livePairs: Map<String, MediaItem>,
+    val isPrivate: Boolean = false,
 )
 
 /**
@@ -27,11 +28,11 @@ class ViewerViewModel(application: Application) : AndroidViewModel(application) 
 
     val playback = PlayerController(application, viewModelScope)
 
-    fun open(items: List<MediaItem>, startKey: String, livePairs: Map<String, MediaItem>) {
+    fun open(items: List<MediaItem>, startKey: String, livePairs: Map<String, MediaItem>, isPrivate: Boolean = false) {
         val index = items.indexOfFirst { it.key == startKey }
         if (index < 0) return
         currentIndex = index
-        _session.value = ViewerSession(items, livePairs)
+        _session.value = ViewerSession(items, livePairs, isPrivate)
     }
 
     fun close() {

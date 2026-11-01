@@ -14,7 +14,9 @@ import com.gallery.thekami.core.data.faces.FaceScanService
 import com.gallery.thekami.core.data.marks.MarksRepository
 import com.gallery.thekami.core.data.media.MediaStoreMediaRepository
 import com.gallery.thekami.core.data.people.PeopleRepository
+import com.gallery.thekami.core.data.privatemedia.PrivateStore
 import com.gallery.thekami.core.data.settings.SettingsRepository
+import com.gallery.thekami.core.data.trash.MediaStoreTrashRepository
 import com.gallery.thekami.core.domain.media.MediaRepository
 import com.gallery.thekami.core.domain.media.SharedMediaLibrary
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,8 @@ class GalleryApplication : Application(), SingletonImageLoader.Factory {
     val albumsRepository: AlbumsRepository by lazy { AlbumsRepository(this) }
     val marksRepository: MarksRepository by lazy { MarksRepository(this) }
     val peopleRepository: PeopleRepository by lazy { PeopleRepository(this) }
+    val privateStore: PrivateStore by lazy { PrivateStore(this) }
+    val trashRepository: MediaStoreTrashRepository by lazy { MediaStoreTrashRepository(this) }
     val mediaRepository: MediaRepository by lazy { MediaStoreMediaRepository(this) }
 
     /** One shared library subscription for Home, Collections and Search. */

@@ -1,7 +1,14 @@
 package com.gallery.thekami.ui
 
+import android.app.Activity
+import android.app.KeyguardManager
+import android.content.IntentSender
+import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -18,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +39,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.SingletonImageLoader
+import com.gallery.thekami.GalleryApplication
+import com.gallery.thekami.R
+import com.gallery.thekami.core.domain.navigation.CollectionsRoute
 import com.gallery.thekami.core.domain.navigation.NavigationState
 import com.gallery.thekami.core.domain.navigation.TopLevelDestination
 import com.gallery.thekami.core.domain.settings.NavBarStyle
@@ -40,16 +52,25 @@ import com.gallery.thekami.ui.collections.CollectionsActions
 import com.gallery.thekami.ui.collections.CollectionsHost
 import com.gallery.thekami.ui.collections.CollectionsState
 import com.gallery.thekami.ui.collections.CollectionsViewModel
+import com.gallery.thekami.ui.collections.PrivateAreaUi
+import com.gallery.thekami.ui.collections.TrashUi
 import com.gallery.thekami.ui.home.HomeScreen
 import com.gallery.thekami.ui.home.HomeUiState
 import com.gallery.thekami.ui.home.HomeViewModel
 import com.gallery.thekami.ui.search.SearchScreen
 import com.gallery.thekami.ui.search.SearchViewModel
+import com.gallery.thekami.ui.privatemedia.PrivateOperationDialogs
+import com.gallery.thekami.ui.privatemedia.PrivateMessage
+import com.gallery.thekami.ui.privatemedia.PrivateViewModel
 import com.gallery.thekami.ui.settings.SettingsScreen
 import com.gallery.thekami.ui.settings.SettingsViewModel
+import com.gallery.thekami.ui.trash.TrashViewModel
+import com.gallery.thekami.ui.viewer.PrivateViewerActions
 import com.gallery.thekami.ui.viewer.ViewerScreen
 import com.gallery.thekami.ui.viewer.ViewerSession
 import com.gallery.thekami.ui.viewer.ViewerViewModel
+import com.gallery.thekami.ui.viewer.deleteRequest
+import com.gallery.thekami.ui.viewer.trashRequest
 import kotlinx.coroutines.delay
 
 @Composable
@@ -61,6 +82,8 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     val marksModel: MarksViewModel = viewModel(factory = MarksViewModel.Factory)
     val search: SearchViewModel = viewModel(factory = SearchViewModel.Factory)
     val settingsModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+    val privateVm: PrivateViewModel = viewModel(factory = PrivateViewModel.Factory)
+    val trashVm: TrashViewModel = viewModel(factory = TrashViewModel.Factory)
     val uiState by home.uiState.collectAsStateWithLifecycle()
     val isRefreshing by home.isRefreshing.collectAsStateWithLifecycle()
     val collectionsState by collections.state.collectAsStateWithLifecycle()
@@ -69,6 +92,13 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
     val faceCounts by collections.faceCounts.collectAsStateWithLifecycle()
     val marks by marksModel.marks.collectAsStateWithLifecycle()
     val viewerSession by viewer.session.collectAsStateWithLifecycle()
+    val privateUnlocked by privateVm.unlocked.collectAsStateWithLifecycle()
+    val privateItems by privateVm.active.collectAsStateWithLifecycle()
+    val privateTrashed by privateVm.trashed.collectAsStateWithLifecycle()
+    val moveState by privateVm.moveState.collectAsStateWithLifecycle()
+    val privateMessage by privateVm.message.collectAsStateWithLifecycle()
+    val trashState by trashVm.state.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { home.onPermissionResult() }
@@ -85,11 +115,61 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
         }
     }
 
+    // Private locks as soon as the app leaves the foreground (not on rotation) and image caches are
+    // cleared so no private thumbnail stays in memory.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        if (activity?.isChangingConfigurations != true && privateVm.unlocked.value) {
+            privateVm.lock()
+            SingletonImageLoader.get(context).memoryCache?.clear()
+            (context.applicationContext as GalleryApplication).viewerImageLoader.memoryCache?.clear()
+        }
+    }
+    LaunchedEffect(privateUnlocked, viewerSession?.isPrivate) {
+        if (!privateUnlocked && viewerSession?.isPrivate == true) viewer.close()
+    }
+
+    val keyguard = remember { context.getSystemService(KeyguardManager::class.java) }
+    val deviceSecure = keyguard?.isDeviceSecure == true
+    val credentialLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) privateVm.unlock()
+    }
+    val unlockTitle = stringResource(R.string.private_unlock_prompt_title)
+    val unlockDescription = stringResource(R.string.private_unlock_prompt_desc)
+    val unlock: () -> Unit = {
+        keyguard?.createConfirmDeviceCredentialIntent(unlockTitle, unlockDescription)?.let { credentialLauncher.launch(it) }
+    }
+
+    // One launcher for every Android confirmation (restore, delete forever, delete original).
+    var pendingSystem by remember { mutableStateOf<PendingSystemAction?>(null) }
+    val systemLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val action = pendingSystem
+        pendingSystem = null
+        if (result.resultCode == Activity.RESULT_OK) action?.onOk?.invoke() else action?.onCancel?.invoke()
+    }
+    val launchSystem: (IntentSender?, () -> Unit, () -> Unit) -> Unit = { sender, onOk, onCancel ->
+        if (sender == null) {
+            Toast.makeText(context, R.string.system_request_failed, Toast.LENGTH_SHORT).show()
+        } else {
+            pendingSystem = PendingSystemAction(onOk, onCancel)
+            systemLauncher.launch(IntentSenderRequest.Builder(sender).build())
+        }
+    }
+
     var nav by rememberSaveable(stateSaver = NavigationStateSaver) { mutableStateOf(NavigationState()) }
     val backTarget = nav.back()
     BackHandler(enabled = backTarget != null) { backTarget?.let { nav = it } }
     // Registered last, so it wins: Back closes the viewer first.
     BackHandler(enabled = viewerSession != null) { viewer.close() }
+
+    val route = nav.collectionsRoute
+    val showingPrivate = privateUnlocked &&
+        (route == CollectionsRoute.Private || route == CollectionsRoute.HiddenTrash || viewerSession?.isPrivate == true)
+    DisposableEffect(showingPrivate, activity) {
+        val window = activity?.window
+        if (showingPrivate) window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
+    }
+    LaunchedEffect(route) { if (route == CollectionsRoute.Trash) trashVm.refresh() }
 
     val overlayOpen = nav.searchOpen || nav.settingsOpen || viewerSession != null
     val requestAccess = { permissionLauncher.launch(home.permissionsToRequest().toTypedArray()) }
@@ -119,6 +199,44 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
         addPersonMedia = { id, keys -> collections.addPersonMedia(id, keys) },
         removePersonMedia = { id, keys -> collections.removePersonMedia(id, keys) },
         setPersonCover = { id, key -> collections.setPersonCover(id, key) },
+    )
+
+    val privateArea = PrivateAreaUi(
+        unlocked = privateUnlocked,
+        deviceSecure = deviceSecure,
+        items = privateItems,
+        trashed = privateTrashed,
+        nowMillis = System.currentTimeMillis(),
+        unlock = unlock,
+        openMedia = { sequence, item -> viewer.open(sequence, item.key, emptyMap(), isPrivate = true) },
+        restore = privateVm::restoreFromHiddenTrash,
+        deleteForever = privateVm::deleteForever,
+    )
+    val trashUi = TrashUi(
+        state = trashState,
+        refresh = trashVm::refresh,
+        restore = { items ->
+            launchSystem(
+                trashRequest(context, items.map { it.item }, trash = false),
+                { trashVm.refresh(); home.onMediaChanged() },
+                {},
+            )
+        },
+        deleteForever = { items ->
+            launchSystem(
+                deleteRequest(context, items.map { it.item }),
+                { trashVm.refresh(); home.onMediaChanged() },
+                {},
+            )
+        },
+    )
+    val privateViewerActions = PrivateViewerActions(
+        moveToPrivate = { item -> privateVm.moveToPrivate(item) },
+        moveOut = { item -> privateVm.moveOut(item) { viewer.removeItem(item.key); home.onMediaChanged() } },
+        deleteFromPrivate = { item ->
+            privateVm.trashPrivate(item)
+            viewer.removeItem(item.key)
+        },
     )
 
     CompositionLocalProvider(LocalMediaMarks provides marks) {
@@ -156,6 +274,8 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                             depth = nav.collectionsStack.size,
                             state = collectionsState,
                             faceCounts = faceCounts,
+                            privateArea = privateArea,
+                            trash = trashUi,
                             contentPadding = padding,
                             actions = collectionsActions,
                         )
@@ -185,6 +305,24 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
             ) {
                 SettingsScreen(viewModel = settingsModel, onClose = { nav = nav.closeSettings() })
             }
+            PrivateOperationDialogs(
+                moveState = moveState,
+                message = privateMessage,
+                onCancelCopy = privateVm::cancelMove,
+                onDeleteOriginal = { original ->
+                    privateVm.dismissMove()
+                    launchSystem(
+                        deleteRequest(context, listOf(original)),
+                        { viewer.removeItem(original.key); home.onMediaChanged() },
+                        { privateVm.showMessage(PrivateMessage.OriginalKept) },
+                    )
+                },
+                onKeepOriginal = {
+                    privateVm.dismissMove()
+                    privateVm.showMessage(PrivateMessage.OriginalKept)
+                },
+                onDismissMessage = privateVm::dismissMessage,
+            )
             AnimatedVisibility(
                 visible = viewerSession != null,
                 enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.96f),
@@ -203,6 +341,7 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
                         onCreateAlbum = { name, key -> collections.createAlbum(name, key) },
                         onTogglePerson = { personId, key, add -> collections.togglePerson(personId, key, add) },
                         onCreatePerson = { name, relationship, key -> collections.createPerson(name, relationship, key) },
+                        privateActions = privateViewerActions,
                         onMediaChanged = home::onMediaChanged,
                     )
                 }
@@ -210,3 +349,5 @@ fun GalleryApp(navBarStyle: NavBarStyle) {
         }
     }
 }
+
+private class PendingSystemAction(val onOk: () -> Unit, val onCancel: () -> Unit)
